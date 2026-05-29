@@ -1,311 +1,442 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="theme-dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Job Agent — Alejandro Gtz</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 <style>
-:root{--bg:#0b0b12;--surface:rgba(28,28,44,0.75);--surface-hover:rgba(28,28,44,0.95);--border:rgba(99,102,241,0.15);--border-light:rgba(255,255,255,0.06);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.35);--accent2:#a855f7;--text:#e8e8ed;--text-dim:#8888a0;--green:#34d399;--green-bg:rgba(52,211,153,0.12);--amber:#fbbf24;--amber-bg:rgba(251,191,36,0.12);--red:#f87171;--red-bg:rgba(248,113,113,0.12);--radius:16px;--radius-sm:10px}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:-40%;left:-20%;width:80%;height:80%;background:radial-gradient(ellipse,rgba(99,102,241,0.06)0%,transparent 70%);pointer-events:none;z-index:0}
-body::after{content:'';position:fixed;bottom:-30%;right:-10%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(168,85,247,0.05)0%,transparent 70%);pointer-events:none;z-index:0}
-.container{max-width:1100px;margin:0 auto;padding:20px;position:relative;z-index:1}
-.glass{background:var(--surface);backdrop-filter:blur(24px)saturate(1.4);-webkit-backdrop-filter:blur(24px)saturate(1.4);border:1px solid var(--border-light);border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.04)}
-.glow{box-shadow:0 4px 24px rgba(0,0,0,0.3),0 0 40px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,0.04)}
-.header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;margin-bottom:20px}
-.header-left h1{font-size:22px;font-weight:800;background:linear-gradient(135deg,#818cf8,#a78bfa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.header-left p{font-size:13px;color:var(--text-dim);margin-top:2px}
-.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,0.5);margin-right:6px}
-.header-actions{display:flex;gap:8px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:12px;font-size:13px;font-weight:600;font-family:inherit;border:1px solid var(--border-light);cursor:pointer;background:var(--surface);color:var(--text);transition:all 0.2s ease;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.btn:hover{background:var(--surface-hover);border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow);transform:translateY(-1px)}
-.btn:active{transform:scale(0.97)}
-.btn-primary{background:linear-gradient(135deg,#6366f1,#7c3aed);border-color:transparent;color:white}
-.btn-primary:hover{box-shadow:0 0 24px var(--accent-glow);border-color:transparent}
-.btn-success{background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:white}
-.btn-success:hover{box-shadow:0 0 24px rgba(52,211,153,0.3)}
-.btn-amber{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:transparent;color:white}
-.btn-amber:hover{box-shadow:0 0 24px rgba(251,191,36,0.3)}
-.btn-red{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:transparent;color:white}
-.btn-red:hover{box-shadow:0 0 24px rgba(248,113,113,0.3)}
-.btn-outline{background:transparent;border-color:var(--border);color:var(--text)}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn:disabled{opacity:0.4;pointer-events:none}
-.btn-sm{padding:5px 12px;font-size:11px;border-radius:8px}
-.btn-xs{padding:3px 10px;font-size:10px;border-radius:6px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat-card{padding:18px 20px;text-align:center}
-.stat-card .stat-value{font-size:28px;font-weight:800;letter-spacing:-0.5px}
-.stat-card .stat-label{font-size:11px;color:var(--text-dim);font-weight:500;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
-.stat-card .stat-icon{font-size:20px;margin-bottom:4px}
-.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.action-card{padding:18px 20px;cursor:pointer;transition:all 0.25s ease;text-align:center}
-.action-card:hover{border-color:var(--accent);box-shadow:0 0 30px var(--accent-glow);transform:translateY(-2px)}
-.action-card .action-icon{font-size:28px;margin-bottom:6px}
-.action-card .action-title{font-weight:700;font-size:14px}
-.action-card .action-desc{font-size:11px;color:var(--text-dim);margin-top:2px}
-.batch-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;margin-bottom:10px;flex-wrap:wrap}
-.batch-bar .sel-count{font-size:12px;color:var(--text-dim);font-weight:500}
-.progress-card{padding:18px 22px;margin-bottom:20px}
-.progress-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.spinner{width:20px;height:20px;border:2px solid rgba(99,102,241,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+/* ===== RESET + GLOBAL ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-y:auto}
+body{font-family:'Inter','SF Pro Display',-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;padding-bottom:22px}
+
+/* ===== THEME TOKENS (DARK default) ===== */
+:root{
+  --bg:#0b0f14;
+  --surface:rgba(10,20,26,0.62);
+  --surface-2:rgba(10,20,26,0.45);
+  --border:rgba(0,255,213,0.18);
+  --border-light:rgba(255,255,255,0.06);
+  --inset:rgba(0,255,213,0.10);
+  --primary:#00ffd5;
+  --primary-dim:rgba(0,255,213,0.12);
+  --accent:#00a3ff;
+  --accent-dim:rgba(0,163,255,0.10);
+  --glow-a:rgba(0,255,213,0.22);
+  --glow-b:rgba(0,163,255,0.18);
+  --text:#e8f0ed;
+  --text-dim:rgba(239,255,251,0.62);
+  --text-bright:rgba(0,255,213,0.92);
+  --green:#34d399;
+  --green-bg:rgba(52,211,153,0.12);
+  --amber:#fbbf24;
+  --amber-bg:rgba(251,191,36,0.12);
+  --red:#f87171;
+  --red-bg:rgba(248,113,113,0.12);
+  --radius:24px;
+  --radius-sm:14px;
+  --radius-xs:10px;
+  --glass-blur:blur(18px) saturate(130%);
+  --font-alt:'Inter','SF Pro Display',-apple-system,sans-serif;
+}
+html.light{
+  --bg:#f0f7f5;
+  --surface:rgba(255,255,255,0.82);
+  --surface-2:rgba(255,255,255,0.72);
+  --border:rgba(13,185,166,0.18);
+  --border-light:rgba(0,0,0,0.06);
+  --inset:rgba(13,185,166,0.10);
+  --primary:#0db9a6;
+  --primary-dim:rgba(13,185,166,0.12);
+  --accent:#0095e8;
+  --accent-dim:rgba(0,149,232,0.10);
+  --glow-a:rgba(13,185,166,0.22);
+  --glow-b:rgba(0,149,232,0.18);
+  --text:#0a1a1a;
+  --text-dim:rgba(6,22,44,0.68);
+  --text-bright:#0db9a6;
+}
+
+/* ===== BACKGROUND GLOW ===== */
+body::before{content:'';position:fixed;inset:-20%;pointer-events:none;z-index:-1;background:radial-gradient(700px 320px at 15% 10%,rgba(0,255,213,0.10),transparent 65%),radial-gradient(560px 280px at 85% 15%,rgba(0,163,255,0.08),transparent 60%)}
+html.light body::before{background:radial-gradient(820px 500px at 18% -10%,rgba(0,255,213,0.28),transparent 60%),radial-gradient(720px 420px at 85% 15%,rgba(0,149,255,0.22),transparent 62%),radial-gradient(900px 500px at 50% 110%,rgba(255,255,255,0.60),transparent 70%)}
+
+/* ===== GLASS BASE ===== */
+.glass{border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px var(--inset)}
+.glass::after{content:'';position:absolute;inset:-1px;pointer-events:none;border-radius:inherit;background:radial-gradient(420px 220px at 15% 0%,var(--glow-a),transparent 65%),radial-gradient(420px 220px at 85% 100%,var(--glow-b),transparent 70%);opacity:.65;filter:blur(14px)}
+.glass>*{position:relative;z-index:1}
+
+/* ===== BODY ===== */
+body{background:var(--bg);color:var(--text);transition:background .2s ease,color .2s ease}
+
+/* ===== CONTAINER ===== */
+.container{max-width:1100px;margin:0 auto;padding:0 16px;position:relative;z-index:1}
+
+/* ===== TOPBAR ===== */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--surface);border-bottom:1px solid var(--border-light);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+.topbar::after{content:'';position:absolute;inset:-1px;pointer-events:none;border-radius:0;background:radial-gradient(520px 260px at 15% 10%,var(--glow-a),transparent 55%),radial-gradient(520px 260px at 85% 90%,var(--glow-b),transparent 60%);opacity:.65;filter:blur(16px)}
+html.light .topbar{background:rgba(255,255,255,0.78);border-bottom:1px solid rgba(0,120,200,0.12);box-shadow:0 1px 0 rgba(255,255,255,0.60)inset}
+.topbar-inner{max-width:1100px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1}
+.brand{font-weight:900;font-size:24px;letter-spacing:-.6px;text-decoration:none}
+.brand .eth{color:var(--primary)}
+.brand .base{color:var(--text)}
+html.light .brand .base{color:#0a1a1a}
+.theme-toggle{width:38px;height:34px;border-radius:12px;border:1px solid var(--border-light);background:rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text);transition:all .2s}
+.theme-toggle:hover{background:rgba(255,255,255,0.10);border-color:var(--border)}
+
+/* ===== MAIN CONTENT PADDING ===== */
+.main{padding-top:58px;padding-bottom:16px}
+
+/* ===== HEADER CARD ===== */
+.header-card{padding:16px 24px;margin-bottom:16px}
+.header-card h1{font-size:20px;font-weight:800;color:var(--text-bright)}
+.header-card p{font-size:12px;color:var(--text-dim);margin-top:2px}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,0.5);margin-right:5px}
+
+/* ===== STATS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{padding:14px 16px;text-align:center}
+.stat-card .sv{font-size:26px;font-weight:800;letter-spacing:-0.5px}
+.stat-card .sl{font-size:10px;color:var(--text-dim);font-weight:600;margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.stat-card .si{font-size:18px;margin-bottom:3px}
+.stat-card.glow{box-shadow:inset 0 0 0 1px var(--inset),0 0 30px var(--glow-a)}
+
+/* ===== ACTION CARDS ===== */
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.action-card{padding:14px 16px;cursor:pointer;transition:all .25s ease;text-align:center}
+.action-card:hover{border-color:var(--primary);box-shadow:0 0 24px var(--glow-a);transform:translateY(-2px)}
+.action-card .ai{font-size:24px;margin-bottom:4px}
+.action-card .at{font-weight:700;font-size:13px}
+.action-card .ad{font-size:10px;color:var(--text-dim);margin-top:1px}
+
+/* ===== KEYWORDS EDITOR ===== */
+.kw-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;margin-bottom:10px;flex-wrap:wrap}
+.kw-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;background:var(--primary-dim);border:1px solid var(--border);color:var(--primary)}
+.kw-tag .kw-del{cursor:pointer;font-size:14px;line-height:1;opacity:.6;transition:opacity .15s}
+.kw-tag .kw-del:hover{opacity:1}
+.kw-add{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;border:1px dashed var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.kw-add:hover{border-color:var(--primary);color:var(--primary)}
+.kw-input{background:transparent;border:1px solid var(--border-light);border-radius:8px;padding:6px 10px;font-size:12px;font-family:inherit;color:var(--text);width:140px;outline:none}
+.kw-input:focus{border-color:var(--primary)}
+html.light .kw-input{border-color:rgba(0,0,0,0.12)}
+
+/* ===== BATCH BAR ===== */
+.batch-bar{display:flex;align-items:center;gap:6px;padding:6px 16px;margin-bottom:8px;flex-wrap:wrap}
+.batch-bar .sc{font-size:12px;color:var(--text-dim);font-weight:500;margin-right:4px}
+
+/* ===== PROGRESS ===== */
+.progress-card{padding:14px 18px;margin-bottom:16px}
+.progress-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.spinner{width:18px;height:18px;border:2px solid var(--primary-dim);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-.progress-bar{width:100%;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
-.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.4s ease;box-shadow:0 0 12px var(--accent-glow)}
-.progress-logs{margin-top:8px;font-size:11px;color:var(--text-dim);max-height:80px;overflow-y:auto;line-height:1.6}
-.progress-logs .log-success{color:var(--green)}
-.progress-logs .log-error{color:var(--red)}
-.filter-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;margin-bottom:12px}
-.filter-bar h2{font-size:16px;font-weight:700}
-.filter-controls{display:flex;gap:8px;align-items:center}
-.filter-select{background:rgba(255,255,255,0.05);border:1px solid var(--border-light);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit;color:var(--text);cursor:pointer}
-.filter-select option{background:#1a1a2e}
-.job-count{font-size:12px;color:var(--text-dim);font-weight:500}
-.jobs-list{display:flex;flex-direction:column;gap:4px}
-.job-item{display:flex;align-items:center;padding:10px 12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);border:1px solid transparent;transition:all 0.2s ease;gap:10px}
-.job-item:hover{background:rgba(99,102,241,0.04);border-color:var(--border)}
-.job-item.selected{background:rgba(99,102,241,0.06);border-color:var(--accent)}
+.progress-bar{width:100%;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .4s ease;box-shadow:0 0 10px var(--glow-a)}
+.progress-logs{margin-top:6px;font-size:11px;color:var(--text-dim);max-height:80px;overflow-y:auto;line-height:1.5}
+.log-success{color:var(--green)}
+.log-error{color:var(--red)}
+
+/* ===== SUMMARY ===== */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.summary-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+.summary-item .si{font-size:16px}
+.summary-item .sil{font-size:10px;color:var(--text-dim)}
+.summary-item .siv{font-size:12px;font-weight:600}
+
+/* ===== FILTER BAR ===== */
+.filter-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border-light)}
+.filter-bar h2{font-size:15px;font-weight:700}
+.filter-controls{display:flex;gap:6px;align-items:center}
+.filter-select{background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;padding:4px 8px;font-size:11px;font-family:inherit;color:var(--text);cursor:pointer}
+.filter-select option{background:#0b0f14}
+html.light .filter-select option{background:#fff}
+
+/* ===== JOBS ===== */
+.jobs-list{display:flex;flex-direction:column;gap:3px;padding:4px}
+.job-item{display:flex;align-items:center;padding:8px 10px;border-radius:var(--radius-xs);background:rgba(255,255,255,0.02);border:1px solid transparent;transition:all .2s ease;gap:8px}
+.job-item:hover{background:rgba(0,255,213,0.03);border-color:var(--border)}
+.job-item.selected{background:rgba(0,255,213,0.05);border-color:var(--primary)}
 .job-check{flex-shrink:0}
-.job-check input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.job-check input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);cursor:pointer}
 .job-info{flex:1;min-width:0}
-.job-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.job-meta{font-size:11px;color:var(--text-dim);margin-top:1px}
-.job-skills{font-size:10px;color:var(--accent);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.job-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.score-badge{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap}
-.score-high{background:var(--green-bg);color:var(--green)}
-.score-mid{background:var(--amber-bg);color:var(--amber)}
-.score-low{background:var(--red-bg);color:var(--red)}
-.applied-badge{padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;background:var(--green-bg);color:var(--green);white-space:nowrap}
-.pending-badge{padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;background:var(--amber-bg);color:var(--amber);white-space:nowrap}
-.empty-state{text-align:center;padding:40px 20px;color:var(--text-dim)}
-.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
-.empty-state p{font-size:13px}
-.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-hidden{display:none!important}
-.modal-content{max-width:860px;width:100%;max-height:90vh;overflow:hidden;border-radius:var(--radius);box-shadow:0 0 60px rgba(99,102,241,0.15)}
-.modal-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(135deg,#1e1b4b,#0b0b12);border-bottom:1px solid var(--border-light);border-radius:var(--radius)var(--radius)0 0}
-.modal-bar .modal-title{font-size:14px;font-weight:600}
-.modal-bar .close-btn{background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;padding:0 4px;transition:color 0.2s}
-.modal-bar .close-btn:hover{color:var(--text)}
-.modal-loading{display:flex;align-items:center;justify-content:center;height:300px;color:var(--text-dim);flex-direction:column;gap:12px}
+.job-title{font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job-title:hover{color:var(--primary)}
+.job-meta{font-size:10px;color:var(--text-dim);margin-top:1px}
+.job-skills{font-size:9px;color:var(--primary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job-actions{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.score-b{padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap}
+.s-high{background:var(--green-bg);color:var(--green)}
+.s-mid{background:var(--amber-bg);color:var(--amber)}
+.s-low{background:var(--red-bg);color:var(--red)}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:12px;font-size:11px;font-weight:700;font-family:inherit;border:1px solid var(--border-light);cursor:pointer;background:var(--surface);color:var(--text);transition:all .18s ease;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.btn:hover{background:var(--surface);border-color:var(--primary);box-shadow:0 0 14px var(--glow-a);transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent;color:#08101a}
+.btn-p:hover{box-shadow:0 0 18px var(--glow-a)}
+.btn-g{background:linear-gradient(135deg,#10b981,#059669);border-color:transparent;color:white}
+.btn-g:hover{box-shadow:0 0 18px rgba(52,211,153,0.3)}
+.btn-a{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:transparent;color:white}
+.btn-a:hover{box-shadow:0 0 18px rgba(251,191,36,0.3)}
+.btn-r{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:transparent;color:white}
+.btn-r:hover{box-shadow:0 0 18px rgba(248,113,113,0.3)}
+.btn-o{background:transparent;border-color:var(--border);color:var(--text)}
+.btn-o:hover{border-color:var(--primary);color:var(--primary)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn-xs{font-size:9px;padding:2px 8px;border-radius:8px}
+.btn-sm{font-size:10px;padding:3px 10px;border-radius:10px}
+.ab{padding:1px 6px;border-radius:6px;font-size:9px;font-weight:600;background:var(--green-bg);color:var(--green);white-space:nowrap}
+.pb{padding:1px 6px;border-radius:6px;font-size:9px;font-weight:600;background:var(--amber-bg);color:var(--amber);white-space:nowrap}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;padding:30px 16px;color:var(--text-dim)}
+.empty .ei{font-size:40px;margin-bottom:8px}
+.empty p{font-size:12px}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.55);display:flex;align-items:flex-start;justify-content:center;padding:16px}
+.modal-overlay::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(720px 400px at 20% 30%,rgba(0,255,213,0.22),transparent 65%),radial-gradient(640px 360px at 80% 35%,rgba(0,163,255,0.16),transparent 65%);filter:blur(40px)}
+html.light .modal-overlay{background:rgba(0,0,0,0.22)}
+html.light .modal-overlay::before{background:radial-gradient(760px 440px at 20% 30%,rgba(13,185,166,0.35),transparent 65%),radial-gradient(680px 380px at 80% 35%,rgba(0,163,255,0.28),transparent 65%);filter:blur(40px)}
+.hidden{display:none!important}
+.modal-card{position:relative;z-index:2;max-width:860px;width:100%;margin-top:calc(58px + 8px);max-height:calc(100vh - 58px - 60px);display:flex;flex-direction:column;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);box-shadow:0 24px 60px rgba(0,0,0,0.55),0 0 0 1px rgba(0,255,213,0.18)inset}
+.modal-card::after{content:'';position:absolute;inset:-1px;pointer-events:none;border-radius:inherit;background:radial-gradient(420px 220px at 15% 0%,var(--glow-a),transparent 65%),radial-gradient(420px 220px at 85% 100%,var(--glow-b),transparent 70%);opacity:.55;filter:blur(14px)}
+.modal-card>*{position:relative;z-index:1}
+html.light .modal-card{background:rgba(255,255,255,0.92)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-light);background:rgba(255,255,255,0.02)}
+.modal-head h3{font-size:14px;font-weight:700}
+.modal-head .close{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:0 4px;transition:color .15s}
+.modal-head .close:hover{color:var(--text)}
+.modal-body{padding:16px 20px 20px;overflow-y:auto;flex:1}
+.modal-sm .modal-card{max-width:520px}
+.modal-body input,.modal-body textarea,.modal-body select{width:100%;background:var(--surface-2);border:1px solid var(--border-light);border-radius:10px;padding:8px 12px;font-size:12px;font-family:inherit;color:var(--text);margin-bottom:8px;outline:none;transition:border-color .15s}
+.modal-body input:focus,.modal-body textarea:focus,.modal-body select:focus{border-color:var(--primary)}
+.modal-body textarea{resize:vertical;min-height:60px}
+.modal-body label{font-size:11px;font-weight:600;color:var(--text-dim);display:block;margin-bottom:3px}
+html.light .modal-body input,html.light .modal-body textarea,html.light .modal-body select{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.10)}
 #cvFrame{width:100%;height:calc(90vh - 60px);border:none;background:white;border-radius:0 0 var(--radius)var(--radius)}
-.manual-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border-light);border-radius:10px;padding:10px 14px;font-size:13px;font-family:inherit;color:var(--text);margin-bottom:12px}
-.manual-input::placeholder{color:var(--text-dim)}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0}
-.summary-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)}
-.summary-item .si-icon{font-size:18px}
-.summary-item .si-label{font-size:11px;color:var(--text-dim)}
-.summary-item .si-value{font-size:13px;font-weight:600}
 .job-detail-table{width:100%;border-collapse:collapse;font-size:12px}
-.job-detail-table td{padding:6px 8px;border-bottom:1px solid var(--border-light);vertical-align:top}
-.job-detail-table td:first-child{color:var(--text-dim);font-weight:500;width:110px}
-.job-detail-modal{max-width:640px}
-.desc-text{font-size:11px;color:var(--text-dim);line-height:1.6;max-height:200px;overflow-y:auto;white-space:pre-wrap}
-@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.action-grid{grid-template-columns:1fr}.filter-bar{flex-direction:column;gap:8px;align-items:flex-start}.header{flex-direction:column;gap:12px;text-align:center}.batch-bar{flex-wrap:wrap}}
+.job-detail-table td{padding:5px 6px;border-bottom:1px solid var(--border-light);vertical-align:top}
+.job-detail-table td:first-child{color:var(--text-dim);font-weight:500;width:100px}
+.desc-text{font-size:11px;color:var(--text-dim);line-height:1.5;max-height:150px;overflow-y:auto;white-space:pre-wrap}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}.action-grid{grid-template-columns:1fr}.filter-bar{flex-direction:column;gap:6px;align-items:flex-start}.topbar-inner{padding:6px 12px}.brand{font-size:20px}.header-card{padding:12px 16px}.modal-card{margin-top:50px;max-height:calc(100vh - 50px - 30px);max-width:calc(100vw - 24px)}.modal-overlay{padding:12px}}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header glass">
-    <div class="header-left">
-      <h1>🤖 Job Agent</h1>
-      <p><span class="status-dot"></span>Alejandro Gutierrez Zavala</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn" onclick="refreshAll()">🔄 Refrescar</button>
-    </div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card glass glow"><div class="stat-icon">💼</div><div class="stat-value" id="totalJobs">—</div><div class="stat-label">Vacantes</div></div>
-    <div class="stat-card glass"><div class="stat-icon">✅</div><div class="stat-value" id="totalApps">—</div><div class="stat-label">Postulaciones</div></div>
-    <div class="stat-card glass"><div class="stat-icon">🎯</div><div class="stat-value" id="avgMatch">—</div><div class="stat-label">Match Prom.</div></div>
-    <div class="stat-card glass"><div class="stat-icon">📅</div><div class="stat-value" id="todayApps">—</div><div class="stat-label">Hoy</div></div>
-  </div>
-  <div class="action-grid">
-    <div class="action-card glass" onclick="runScrape()" id="btnScrape"><div class="action-icon">🔍</div><div class="action-title">Buscar Vacantes</div><div class="action-desc">Scrapea LinkedIn con tus keywords</div></div>
-    <div class="action-card glass" onclick="runPipeline()" id="btnPipeline"><div class="action-icon">⚡</div><div class="action-title">Pipeline Completo</div><div class="action-desc">Scrape + Match + CV + Postular (top 5)</div></div>
-    <div class="action-card glass" onclick="showManualModal()"><div class="action-icon">📝</div><div class="action-title">Agregar Vacante</div><div class="action-desc">Pega URL de LinkedIn manual</div></div>
-  </div>
-  <div id="progressCard" class="progress-card glass modal-hidden">
-    <div class="progress-header"><div class="spinner"></div><span id="progressText" style="font-size:13px;font-weight:600;">Procesando...</span></div>
-    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="progress-logs" id="logOutput"></div>
-  </div>
-  <div id="summaryCard" class="glass modal-hidden" style="padding:18px 22px;margin-bottom:20px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <h3 style="font-size:15px;font-weight:700;">📊 Resumen de Postulaciones</h3>
-      <button class="btn btn-sm" onclick="document.getElementById('summaryCard').classList.add('modal-hidden')">✕</button>
-    </div>
-    <div class="summary-grid" id="summaryContent"></div>
-  </div>
-  <div class="glass" style="overflow:hidden;">
-    <div class="filter-bar">
-      <h2>📋 Vacantes</h2>
-      <div class="filter-controls">
-        <span class="job-count" id="jobsCount"></span>
-        <select class="filter-select" id="platformFilter" onchange="loadJobs()"><option value="">Todas</option><option value="linkedin">LinkedIn</option><option value="manual">Manual</option></select>
-        <select class="filter-select" id="statusFilter" onchange="loadJobs()"><option value="">Todas</option><option value="pending">Pendientes</option><option value="applied">Postuladas</option></select>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand"><span class="eth">✦ job</span><span class="base">.agent</span></a>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Cambiar tema">🌙</button>
       </div>
     </div>
-    <!-- Batch actions bar -->
-    <div id="batchBar" class="batch-bar modal-hidden" style="padding:0 14px 8px 14px;">
-      <span class="sel-count" id="selCount">0 seleccionadas</span>
-      <button class="btn btn-xs btn-amber" onclick="batchGenCV()">📄 Generar CVs</button>
-      <button class="btn btn-xs btn-success" onclick="batchMarkApplied()">✅ Marcar Postuladas</button>
-      <button class="btn btn-xs btn-outline" onclick="selectAll()">☑️ Seleccionar todas</button>
-      <button class="btn btn-xs btn-outline" onclick="deselectAll()">✕ Deseleccionar</button>
-    </div>
-    <div class="jobs-list" id="jobsList" style="padding:0 4px 12px 4px;"><div class="empty-state"><div class="empty-icon">🔮</div><p>Usa los botones para buscar vacantes</p></div></div>
   </div>
-</div>
-<!-- Detail Modal -->
-<div id="detailModal" class="modal-overlay modal-hidden">
-  <div class="modal-content glass job-detail-modal">
-    <div class="modal-bar"><span class="modal-title" id="detailTitle">📋 Detalle</span><button class="close-btn" onclick="document.getElementById('detailModal').classList.add('modal-hidden')">&times;</button></div>
-    <div style="padding:20px;max-height:70vh;overflow-y:auto;" id="detailContent"></div>
-  </div>
-</div>
-<!-- CV Modal -->
-<div id="cvModal" class="modal-overlay modal-hidden">
-  <div class="modal-content glass">
-    <div class="modal-bar">
-      <span class="modal-title" id="cvModalTitle">📄 CV — Vacante</span>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-xs btn-success" onclick="downloadCurrentCV()" id="btnDlCV" style="display:none;">⬇ Descargar</button>
-        <button class="close-btn" onclick="closeCVModal()">&times;</button>
+
+  <div class="main">
+    <!-- HEADER -->
+    <div class="header-card glass">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <h1>🤖 Job Agent</h1>
+          <p><span class="status-dot"></span>Alejandro Gutierrez Zavala</p>
+        </div>
+        <button class="btn btn-o btn-sm" onclick="openProfileModal()">✏️ Editar Perfil</button>
       </div>
     </div>
-    <div id="cvFrameContainer" style="background:white;"><div class="modal-loading"><div class="spinner"></div><span>Generando CV...</span></div></div>
-  </div>
-</div>
-<!-- Manual Modal -->
-<div id="manualModal" class="modal-overlay modal-hidden">
-  <div class="modal-content glass" style="max-width:480px;">
-    <div class="modal-bar"><span class="modal-title">📝 Agregar Vacante</span><button class="close-btn" onclick="closeManualModal()">&times;</button></div>
-    <div style="padding:20px;">
-      <input class="manual-input" id="manualUrl" placeholder="URL de LinkedIn (https://www.linkedin.com/jobs/view/...)" />
-      <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="addManualJob()" style="flex:1;justify-content:center;">Agregar</button><button class="btn" onclick="closeManualModal()">Cancelar</button></div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card glass glow"><div class="si">💼</div><div class="sv" id="totalJobs">—</div><div class="sl">Vacantes</div></div>
+      <div class="stat-card glass"><div class="si">✅</div><div class="sv" id="totalApps">—</div><div class="sl">Postulaciones</div></div>
+      <div class="stat-card glass"><div class="si">🎯</div><div class="sv" id="avgMatch">—</div><div class="sl">Match Prom.</div></div>
+      <div class="stat-card glass"><div class="si">📅</div><div class="sv" id="todayApps">—</div><div class="sl">Hoy</div></div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="action-grid">
+      <div class="action-card glass" onclick="runScrape()" id="btnScrape"><div class="ai">🔍</div><div class="at">Buscar Vacantes</div><div class="ad">LinkedIn con tus keywords</div></div>
+      <div class="action-card glass" onclick="runPipeline()" id="btnPipeline"><div class="ai">⚡</div><div class="at">Pipeline Completo</div><div class="ad">Scrape + CVs (top 5)</div></div>
+      <div class="action-card glass" onclick="showManualModal()"><div class="ai">📝</div><div class="at">Agregar Vacante</div><div class="ad">Pega URL de LinkedIn</div></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="progressCard" class="progress-card glass hidden">
+      <div class="progress-header"><div class="spinner"></div><span id="progressText" style="font-size:12px;font-weight:600;">Procesando...</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-logs" id="logOutput"></div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="summaryCard" class="glass hidden" style="padding:14px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="font-size:14px;font-weight:700;">📊 Resumen</h3><button class="btn btn-xs btn-o" onclick="document.getElementById('summaryCard').classList.add('hidden')">✕</button></div>
+      <div class="summary-grid" id="summaryContent"></div>
+    </div>
+
+    <!-- KEYWORDS EDITOR -->
+    <div class="glass" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border-light)"><span style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px">🔑 Keywords de búsqueda</span></div>
+      <div class="kw-bar" id="kwBar"></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="glass" style="overflow:hidden;">
+      <div class="filter-bar">
+        <h2>📋 Vacantes</h2>
+        <div class="filter-controls">
+          <span class="job-count" id="jobsCount" style="font-size:11px;color:var(--text-dim);font-weight:500"></span>
+          <select class="filter-select" id="platformFilter" onchange="loadJobs()"><option value="">Todas</option><option value="linkedin">LinkedIn</option><option value="manual">Manual</option></select>
+          <select class="filter-select" id="statusFilter" onchange="loadJobs()"><option value="">Todas</option><option value="pending">Pendientes</option><option value="applied">Postuladas</option></select>
+        </div>
+      </div>
+      <div id="batchBar" class="batch-bar hidden"><span class="sc" id="selCount">0 seleccionadas</span><button class="btn btn-xs btn-g" onclick="batchGenCV()">📄 Generar CVs</button><button class="btn btn-xs btn-a" onclick="batchMarkApplied()">✅ Postular</button><button class="btn btn-xs btn-o" onclick="selectAll()">☑️ Todas</button><button class="btn btn-xs btn-o" onclick="deselectAll()">✕ Ninguna</button></div>
+      <div class="jobs-list" id="jobsList"><div class="empty"><div class="ei">🔮</div><p>Usa los botones para buscar vacantes</p></div></div>
     </div>
   </div>
 </div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay hidden modal-sm">
+  <div class="modal-card">
+    <div class="modal-head"><h3>✏️ Perfil Profesional</h3><button class="close" onclick="closeModal('profileModal')">&times;</button></div>
+    <div class="modal-body">
+      <label>Nombre completo</label>
+      <input id="pfName" placeholder="Tu nombre" />
+      <label>Título profesional (headline)</label>
+      <input id="pfTitle" placeholder="Ej: Supervisor de Ventas | Retail" />
+      <label>Email</label>
+      <input id="pfEmail" placeholder="email@ejemplo.com" />
+      <label>Ubicación</label>
+      <input id="pfLocation" placeholder="Monterrey, Nuevo León" />
+      <label>LinkedIn URL</label>
+      <input id="pfLinkedin" placeholder="https://linkedin.com/in/..." />
+      <label>GitHub URL</label>
+      <input id="pfGithub" placeholder="https://github.com/..." />
+      <label>ENS / Web</label>
+      <input id="pfWeb" placeholder="alemty.eth" />
+      <label>Teléfono</label>
+      <input id="pfPhone" placeholder="+52 81 ..." />
+      <label>Skills (separadas por coma)</label>
+      <input id="pfSkills" placeholder="Ventas, CRM, Liderazgo, ..." />
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-p" onclick="saveProfile()" style="flex:1;justify-content:center;">Guardar</button><button class="btn btn-o" onclick="closeModal('profileModal')">Cancelar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detailModal" class="modal-overlay hidden">
+  <div class="modal-card" style="max-width:580px">
+    <div class="modal-head"><h3 id="detailTitle">📋 Detalle</h3><button class="close" onclick="closeModal('detailModal')">&times;</button></div>
+    <div class="modal-body" id="detailContent"></div>
+  </div>
+</div>
+
+<!-- CV MODAL -->
+<div id="cvModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="cvModalTitle">📄 CV</h3><div style="display:flex;gap:6px;align-items:center"><button class="btn btn-xs btn-g hidden" onclick="downloadCurrentCV()" id="btnDlCV">⬇ Descargar</button><button class="close" onclick="closeCVModal()">&times;</button></div></div>
+    <div id="cvFrameContainer" style="background:white;"><div class="empty" style="height:200px"><div class="spinner" style="margin:0 auto 8px"></div><p>Generando CV...</p></div></div>
+  </div>
+</div>
+
+<!-- MANUAL MODAL -->
+<div id="manualModal" class="modal-overlay hidden modal-sm">
+  <div class="modal-card">
+    <div class="modal-head"><h3>📝 Agregar Vacante</h3><button class="close" onclick="closeModal('manualModal')">&times;</button></div>
+    <div class="modal-body">
+      <input id="manualUrl" placeholder="https://www.linkedin.com/jobs/view/..." />
+      <div style="display:flex;gap:8px"><button class="btn btn-p" onclick="addManualJob()" style="flex:1;justify-content:center">Agregar</button><button class="btn btn-o" onclick="closeModal('manualModal')">Cancelar</button></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const API=window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'?'http://localhost:3000':'';
-const KW=["Supervisor de Ventas","Coordinador","Vendedor","Ejecutivo de Ventas","Asesor de Ventas","Merchandiser","Capacitador","Sales Trainer","Retail Supervisor","Jefe de Sector","Coordinador Retail","Servicio al Cliente","Call Center","Analista de Datos","Soporte Técnico","Desarrollador Web","Frontend"];
-let running=false,cvC={},selected=new Set(),allJobs=[],currentCVId=null;
+let running=false,cvC={},selected=new Set(),allJobs=[],currentCVId=null,profileSkills=[];
 
-async function api(p,o){o=o||{};return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json());}
-function m(e){e.classList.toggle('modal-hidden')}
-function showManualModal(){m(document.getElementById('manualModal'))}
-function closeManualModal(){m(document.getElementById('manualModal'))}
-function closeCVModal(){m(document.getElementById('cvModal'));document.getElementById('cvFrameContainer').innerHTML='<div class="modal-loading"><div class="spinner"></div><span>Generando CV...</span></div>';document.getElementById('btnDlCV').style.display='none';currentCVId=null}
-function sp(t,p){const e=document.getElementById('progressCard');e.classList.remove('modal-hidden');document.getElementById('progressText').textContent=t;document.getElementById('progressFill').style.width=p+'%'}
+// Default keywords
+let keywords=JSON.parse(localStorage.getItem('jobAgentKw')||'["Supervisor de Ventas","Coordinador","Vendedor","Ejecutivo de Ventas","Asesor de Ventas","Merchandiser","Capacitador","Sales Trainer","Retail Supervisor","Jefe de Sector","Coordinador Retail","Servicio al Cliente","Call Center","Analista de Datos","Soporte Técnico","Desarrollador Web","Frontend"]');
+
+function toggleTheme(){
+  const h=document.documentElement;
+  if(h.classList.contains('light')){h.classList.remove('light');h.classList.add('theme-dark');document.getElementById('themeBtn').textContent='🌙';localStorage.setItem('theme','dark')}
+  else{h.classList.add('light');h.classList.remove('theme-dark');document.getElementById('themeBtn').textContent='☀️';localStorage.setItem('theme','light')}
+}
+(function(){if(localStorage.getItem('theme')==='light'){document.documentElement.classList.add('light');document.documentElement.classList.remove('theme-dark');document.getElementById('themeBtn').textContent='☀️'}})();
+
+function renderKw(){
+  const b=document.getElementById('kwBar');b.innerHTML=keywords.map(k=>'<span class="kw-tag">'+k+'<span class="kw-del" onclick="removeKw(\''+k.replace(/'/g,"\\'")+'\')">×</span></span>').join('')+'<span class="kw-add" onclick="addKw()">+ Agregar</span>'
+}
+function addKw(){const i=prompt('Nueva keyword:');if(i&&i.trim()){keywords.push(i.trim());localStorage.setItem('jobAgentKw',JSON.stringify(keywords));renderKw()}}
+function removeKw(k){keywords=keywords.filter(x=>x!==k);localStorage.setItem('jobAgentKw',JSON.stringify(keywords));renderKw()}
+
+function openProfileModal(){
+  document.getElementById('pfName').value=localStorage.getItem('pfName')||'Alejandro Gutierrez Zavala';
+  document.getElementById('pfTitle').value=localStorage.getItem('pfTitle')||'Supervisor de Ventas | Retail';
+  document.getElementById('pfEmail').value=localStorage.getItem('pfEmail')||'alejandrogtzz93@gmail.com';
+  document.getElementById('pfLocation').value=localStorage.getItem('pfLocation')||'Monterrey, Nuevo León';
+  document.getElementById('pfLinkedin').value=localStorage.getItem('pfLinkedin')||'https://www.linkedin.com/in/alejandro-gutierrez-zavala-181994232/';
+  document.getElementById('pfGithub').value=localStorage.getItem('pfGithub')||'https://github.com/Alemty';
+  document.getElementById('pfWeb').value=localStorage.getItem('pfWeb')||'alemty.eth';
+  document.getElementById('pfPhone').value=localStorage.getItem('pfPhone')||'';
+  document.getElementById('pfSkills').value=localStorage.getItem('pfSkills')||'Ventas, CRM, Salesforce, Retail, Liderazgo de equipo, Merchandising, Capacitación, Análisis de datos, Servicio al cliente, Negociación, Inventarios, KPI, Reporting, Excel avanzado, Power BI';
+  document.getElementById('profileModal').classList.remove('hidden')
+}
+function saveProfile(){
+  ['pfName','pfTitle','pfEmail','pfLocation','pfLinkedin','pfGithub','pfWeb','pfPhone','pfSkills'].forEach(id=>localStorage.setItem(id,document.getElementById(id).value));
+  document.getElementById('profileModal').classList.add('hidden');
+  document.querySelector('.header-card p').innerHTML='<span class="status-dot"></span>'+localStorage.getItem('pfName')
+}
+
+async function api(p,o){o=o||{};return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json())}
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+function showManualModal(){document.getElementById('manualModal').classList.remove('hidden')}
+function closeCVModal(){document.getElementById('cvModal').classList.add('hidden');document.getElementById('cvFrameContainer').innerHTML='<div class="empty" style="height:200px"><div class="spinner" style="margin:0 auto 8px"></div><p>Generando CV...</p></div>';document.getElementById('btnDlCV').classList.add('hidden');currentCVId=null}
+function sp(t,p){const e=document.getElementById('progressCard');e.classList.remove('hidden');document.getElementById('progressText').textContent=t;document.getElementById('progressFill').style.width=p+'%'}
 function lg(m,c){document.getElementById('logOutput').innerHTML+='<div'+(c?' class="log-'+c+'"':'')+'>'+m+'</div>';document.getElementById('logOutput').scrollTop=document.getElementById('logOutput').scrollHeight}
-function hp(){document.getElementById('progressCard').classList.add('modal-hidden');document.getElementById('logOutput').innerHTML=''}
+function hp(){document.getElementById('progressCard').classList.add('hidden');document.getElementById('logOutput').innerHTML=''}
 
 async function loadStats(){const d=await api('/stats');if(!d.ok)return;const s=d.stats;document.getElementById('totalJobs').textContent=s.totalJobs;document.getElementById('totalApps').textContent=s.appliedJobs;document.getElementById('avgMatch').textContent=s.averageMatchScore.toFixed(0)+'%';document.getElementById('todayApps').textContent=s.todayApplications+'/'+s.maxDailyApplications}
 
-async function loadJobs(){const pf=document.getElementById('platformFilter').value,sf=document.getElementById('statusFilter').value,p=new URLSearchParams({limit:'50'});if(pf)p.set('platform',pf);const d=await api('/jobs?'+p.toString());if(!d.ok||!d.jobs){document.getElementById('jobsList').innerHTML='<div class="empty-state"><div class="empty-icon">🔮</div><p>Error al cargar</p></div>';return}
+async function loadJobs(){const pf=document.getElementById('platformFilter').value,sf=document.getElementById('statusFilter').value,p=new URLSearchParams({limit:'50'});if(pf)p.set('platform',pf);const d=await api('/jobs?'+p.toString());if(!d.ok||!d.jobs){document.getElementById('jobsList').innerHTML='<div class="empty"><div class="ei">🔮</div><p>Error al cargar</p></div>';return}
 allJobs=d.jobs;document.getElementById('jobsCount').textContent=allJobs.length;let j=allJobs;if(sf==='applied')j=j.filter(x=>x.applied);if(sf==='pending')j=j.filter(x=>!x.applied);renderJobs(j)}
 
 function renderJobs(jobs){
   const l=document.getElementById('jobsList');
-  if(!jobs.length){l.innerHTML='<div class="empty-state"><div class="empty-icon">🔮</div><p>No hay vacantes con ese filtro</p></div>';updateBatchBar();return}
+  if(!jobs.length){l.innerHTML='<div class="empty"><div class="ei">🔮</div><p>No hay vacantes</p></div>';updateBatchBar();return}
   l.innerHTML=jobs.map(j=>{
-    const b=j.match_score>=60?'score-high':j.match_score>=30?'score-mid':'score-low',ic=j.match_score>=60?'✅':j.match_score>=30?'⚠️':'❌',sk=j.matched_skills_json?JSON.parse(j.matched_skills_json):[],sel=selected.has(j.id)?'selected':'';
-    return '<div class="job-item '+sel+'" id="ji-'+j.id+'"><div class="job-check"><input type="checkbox" '+(selected.has(j.id)?'checked':'')+' onchange="toggleSel(\''+j.id+'\')" /></div><div class="job-info"><div class="job-title" onclick="showDetail(\''+j.id+'\')" style="cursor:pointer">'+ic+' '+j.title+'</div><div class="job-meta">'+(j.company||'?')+' · '+(j.location||'?')+'</div>'+(sk.length?'<div class="job-skills">'+sk.slice(0,4).join(' · ')+(sk.length>4?' · +'+(sk.length-4):'')+'</div>':'')+'</div><div class="job-actions"><span class="score-badge '+b+'">'+j.match_score+'%</span>'+(j.applied?'<span class="applied-badge">✅ Postulada</span>':'<span class="pending-badge">⏳ Pendiente</span>')+'<button class="btn btn-xs btn-outline" onclick="showDetail(\''+j.id+'\')" title="Detalle">🔍</button><button class="btn btn-xs btn-success" onclick="singleGenCV(\''+j.id+'\')" title="Generar CV">📄</button>'+(j.url?'<a href="'+j.url+'" target="_blank" class="btn btn-xs btn-primary" title="Ir a LinkedIn">🔗</a>':'')+'</div></div>'
-  }).join('');
-  updateBatchBar()
-}
+    const b=j.match_score>=60?'s-high':j.match_score>=30?'s-mid':'s-low',ic=j.match_score>=60?'✅':j.match_score>=30?'⚠️':'❌',sk=j.matched_skills_json?JSON.parse(j.matched_skills_json):[],sel=selected.has(j.id)?'selected':'';
+    return '<div class="job-item '+sel+'" id="ji-'+j.id+'"><div class="job-check"><input type="checkbox" '+(selected.has(j.id)?'checked':'')+' onchange="toggleSel(\''+j.id+'\')"/></div><div class="job-info"><div class="job-title" onclick="showDetail(\''+j.id+'\')">'+ic+' '+j.title+'</div><div class="job-meta">'+(j.company||'?')+' · '+(j.location||'?')+'</div>'+(sk.length?'<div class="job-skills">'+sk.slice(0,4).join(' · ')+(sk.length>4?' · +'+(sk.length-4):'')+'</div>':'')+'</div><div class="job-actions"><span class="score-b '+b+'">'+j.match_score+'%</span>'+(j.applied?'<span class="ab">✅ Postulada</span>':'<span class="pb">⏳ Pendiente</span>')+'<button class="btn btn-xs btn-o" onclick="showDetail(\''+j.id+'\')" title="Detalle">🔍</button><button class="btn btn-xs btn-g" onclick="singleGenCV(\''+j.id+'\')" title="CV">📄</button>'+(j.url?'<a href="'+j.url+'" target="_blank" class="btn btn-xs btn-p" title="LinkedIn">🔗</a>':'')+'</div></div>'
+  }).join('');updateBatchBar()}
 
-function toggleSel(id){
-  if(selected.has(id))selected.delete(id);else selected.add(id);
-  const el=document.getElementById('ji-'+id);if(el)el.classList.toggle('selected');
-  updateBatchBar()
-}
-
-function selectAll(){const sj=document.getElementById('statusFilter').value==='applied'?allJobs.filter(x=>x.applied):document.getElementById('statusFilter').value==='pending'?allJobs.filter(x=>!x.applied):allJobs;sj.forEach(j=>{if(!j.applied)selected.add(j.id)});renderJobs(document.getElementById('statusFilter').value==='applied'?allJobs.filter(x=>x.applied):document.getElementById('statusFilter').value==='pending'?allJobs.filter(x=>!x.applied):allJobs)}
+function toggleSel(id){if(selected.has(id))selected.delete(id);else selected.add(id);const el=document.getElementById('ji-'+id);if(el)el.classList.toggle('selected');updateBatchBar()}
+function selectAll(){(document.getElementById('statusFilter').value==='applied'?allJobs.filter(x=>x.applied):document.getElementById('statusFilter').value==='pending'?allJobs.filter(x=>!x.applied):allJobs).forEach(j=>{if(!j.applied)selected.add(j.id)});renderJobs(document.getElementById('statusFilter').value==='applied'?allJobs.filter(x=>x.applied):document.getElementById('statusFilter').value==='pending'?allJobs.filter(x=>!x.applied):allJobs)}
 function deselectAll(){selected.clear();renderJobs(document.getElementById('statusFilter').value==='applied'?allJobs.filter(x=>x.applied):document.getElementById('statusFilter').value==='pending'?allJobs.filter(x=>!x.applied):allJobs)}
-
-function updateBatchBar(){
-  const bar=document.getElementById('batchBar'),cnt=document.getElementById('selCount');
-  cnt.textContent=selected.size+' seleccionadas';
-  if(selected.size>0)bar.classList.remove('modal-hidden');else bar.classList.add('modal-hidden')
-}
+function updateBatchBar(){const bar=document.getElementById('batchBar');document.getElementById('selCount').textContent=selected.size+' seleccionadas';if(selected.size>0)bar.classList.remove('hidden');else bar.classList.add('hidden')}
 
 async function showDetail(id){
   const d=await api('/jobs/'+id);if(!d.ok||!d.job)return;
   const j=d.job,sk=j.skills_json?JSON.parse(j.skills_json):[],mk=j.matched_skills_json?JSON.parse(j.matched_skills_json):[],ms=j.missing_skills_json?JSON.parse(j.missing_skills_json):[];
   document.getElementById('detailTitle').textContent='📋 '+j.title;
-  document.getElementById('detailContent').innerHTML='<table class="job-detail-table">'+
-    '<tr><td>Empresa</td><td><strong>'+j.company+'</strong></td></tr>'+
-    '<tr><td>Ubicación</td><td>'+j.location+'</td></tr>'+
-    '<tr><td>Match</td><td><span class="score-badge '+(j.match_score>=60?'score-high':j.match_score>=30?'score-mid':'score-low')+'">'+j.match_score+'%</span></td></tr>'+
-    '<tr><td>Modalidad</td><td>'+(j.modality||'No especificada')+'</td></tr>'+
-    '<tr><td>Salario</td><td>'+(j.salary||'No especificado')+'</td></tr>'+
-    '<tr><td>Skills totales</td><td>'+(sk.length?sk.join(', '):'No listadas')+'</td></tr>'+
-    (mk.length?'<tr><td>✅ Matched</td><td style="color:var(--green)">'+mk.join(', ')+'</td></tr>':'')+
-    (ms.length?'<tr><td>❌ Missing</td><td style="color:var(--red)">'+ms.join(', ')+'</td></tr>':'')+
-    (j.keyword_hits?'<tr><td>Keywords</td><td>'+j.keyword_hits+' aciertos</td></tr>':'')+
-    (j.analysis?'<tr><td>Análisis</td><td style="font-size:11px;color:var(--text-dim)">'+j.analysis+'</td></tr>':'')+
-    '<tr><td>Descripción</td><td><div class="desc-text">'+(j.description||'No disponible')+'</div></td></tr>'+
-    (j.url?'<tr><td>Link</td><td><a href="'+j.url+'" target="_blank" style="color:var(--accent)">🔗 Abrir en LinkedIn</a></td></tr>':'')+
-    '<tr><td>Estado</td><td>'+(j.applied?'<span class="applied-badge">✅ Postulada</span>':'<span class="pending-badge">⏳ Pendiente</span>')+'</td></tr>'+
-    '</table>'+
-    '<div style="display:flex;gap:8px;margin-top:16px;">'+
-    '<button class="btn btn-sm btn-success" onclick="singleGenCV(\''+j.id+'\')">📄 Generar CV</button>'+
-    (!j.applied?'<button class="btn btn-sm btn-amber" onclick="markApplied(\''+j.id+'\')">✅ Marcar Postulada</button>':'')+
-    (j.url?'<a href="'+j.url+'" target="_blank" class="btn btn-sm btn-primary">🔗 Ir a LinkedIn</a>':'')+
-    '</div>';
-  document.getElementById('detailModal').classList.remove('modal-hidden')
-}
+  document.getElementById('detailContent').innerHTML='<table class="job-detail-table"><tr><td>Empresa</td><td><strong>'+j.company+'</strong></td></tr><tr><td>Ubicación</td><td>'+j.location+'</td></tr><tr><td>Match</td><td><span class="score-b '+(j.match_score>=60?'s-high':j.match_score>=30?'s-mid':'s-low')+'">'+j.match_score+'%</span></td></tr><tr><td>Modalidad</td><td>'+(j.modality||'No especificada')+'</td></tr><tr><td>Salario</td><td>'+(j.salary||'No especificado')+'</td></tr><tr><td>Skills</td><td>'+(sk.length?sk.join(', '):'No listadas')+'</td></tr>'+(mk.length?'<tr><td>✅ Matched</td><td style="color:var(--green)">'+mk.join(', ')+'</td></tr>':'')+(ms.length?'<tr><td>❌ Missing</td><td style="color:var(--red)">'+ms.join(', ')+'</td></tr>':'')+(j.analysis?'<tr><td>Análisis</td><td style="font-size:11px;color:var(--text-dim)">'+j.analysis+'</td></tr>':'')+'<tr><td>Descripción</td><td><div class="desc-text">'+(j.description||'No disponible')+'</div></td></tr>'+(j.url?'<tr><td>Link</td><td><a href="'+j.url+'" target="_blank" style="color:var(--primary)">🔗 Abrir en LinkedIn</a></td></tr>':'')+'<tr><td>Estado</td><td>'+(j.applied?'<span class="ab">✅ Postulada</span>':'<span class="pb">⏳ Pendiente</span>')+'</td></tr></table><div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-sm btn-g" onclick="singleGenCV(\''+j.id+'\')">📄 Generar CV</button>'+(j.url?'<a href="'+j.url+'" target="_blank" class="btn btn-sm btn-p">🔗 Ir a LinkedIn</a>':'')+'</div>';document.getElementById('detailModal').classList.remove('hidden')}
 
-async function singleGenCV(id){
-  lg('📄 Generando CV...');sp('Generando CV...',30);
-  try{const d=await api('/api/agent/cv/'+id,{method:'POST'});if(d.ok&&d.html){cvC[id]=d.html;currentCVId=id;viewCV(id,d.title||'Vacante',d.html)}else{lg('❌ Error generando CV','error')}}catch(e){lg('❌ '+e.message,'error')}
-  setTimeout(()=>{hp()},1000)
-}
+async function singleGenCV(id){lg('📄 Generando CV...');sp('Generando CV...',30);try{const d=await api('/api/agent/cv/'+id,{method:'POST'});if(d.ok&&d.html){cvC[id]=d.html;currentCVId=id;viewCV(id,d.title||'Vacante',d.html)}else{lg('❌ Error generando CV','error')}}catch(e){lg('❌ '+e.message,'error')}setTimeout(()=>{hp()},1000)}
+async function batchGenCV(){if(!selected.size)return;sp('📄 Generando '+selected.size+' CVs...',10);lg('📄 Generando CVs para '+selected.size+' vacantes...');let cc=0,i=0;for(const id of selected){i++;sp('📄 CV '+i+'/'+selected.size+'...',Math.round(i/selected.size*80));try{const d=await api('/api/agent/cv/'+id,{method:'POST'});if(d.ok&&d.html){cvC[id]=d.html;cc++;lg('  📄 '+d.title+' ('+d.matchScore+'%)','success')}}catch(e){lg('  ⚠️ Error CV','error')}}sp('✅ '+cc+' CVs generados',100);lg('✅ '+cc+' CVs generados','success');setTimeout(()=>{hp()},1500)}
+async function batchMarkApplied(){if(!selected.size)return;sp('✅ Marcando '+selected.size+' postulaciones...',10);lg('✅ Marcando '+selected.size+' postulaciones...');let ac=0,i=0;for(const id of selected){i++;sp('✅ '+i+'/'+selected.size+'...',Math.round(i/selected.size*100));try{const d=await api('/api/agent/mark-applied',{method:'POST',body:JSON.stringify({jobId:id})});if(d.ok)ac++;lg('  ✅ Postulación marcada','success')}catch(e){lg('  ⚠️ Error','error')}}sp('✅ '+ac+' postulaciones marcadas',100);lg('✅ Total: '+ac+' marcadas','success');selected.clear();setTimeout(()=>{hp();loadJobs();loadStats()},1000)}
+function viewCV(id,tit,html){document.getElementById('cvModalTitle').textContent='📄 CV — '+(tit||'Vacante');document.getElementById('cvModal').classList.remove('hidden');const c=document.getElementById('cvFrameContainer');if(html||cvC[id]){const h=html||cvC[id];c.innerHTML='<iframe id="cvFrame" srcdoc="'+h.replace(/"/g,'&quot;').replace(/\n/g,'')+'"></iframe>';document.getElementById('btnDlCV').classList.remove('hidden')}}
+function downloadCurrentCV(){const id=currentCVId;if(!id||!cvC[id])return;const blob=new Blob([cvC[id]],{type:'text/html'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CV_'+(allJobs.find(j=>j.id===id)?.title||'vacante').replace(/[^a-zA-Z0-9]/g,'_').substring(0,40)+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)}
 
-async function batchGenCV(){
-  if(!selected.size)return;sp('📄 Generando '+selected.size+' CVs...',10);lg('📄 Generando CVs para '+selected.size+' vacantes...');
-  let cc=0;let i=0;
-  for(const id of selected){
-    i++;sp('📄 CV '+i+'/'+selected.size+'...',Math.round(i/selected.size*80));
-    try{const d=await api('/api/agent/cv/'+id,{method:'POST'});if(d.ok&&d.html){cvC[id]=d.html;cc++;lg('  📄 '+d.title+' ('+d.matchScore+'%)','success')}}catch(e){lg('  ⚠️ Error en CV','error')}
-  }
-  sp('✅ '+cc+' CVs generados',100);lg('✅ '+cc+' CVs generados','success');
-  setTimeout(()=>{hp()},1500)
-}
-
-async function batchMarkApplied(){
-  if(!selected.size)return;sp('✅ Marcando '+selected.size+' postulaciones...',10);lg('✅ Marcando '+selected.size+' postulaciones...');
-  let ac=0;let i=0;
-  for(const id of selected){
-    i++;sp('✅ '+i+'/'+selected.size+'...',Math.round(i/selected.size*100));
-    try{const d=await api('/api/agent/mark-applied',{method:'POST',body:JSON.stringify({jobId:id})});if(d.ok)ac++;lg('  ✅ Postulación marcada','success')}catch(e){lg('  ⚠️ Error','error')}
-  }
-  sp('✅ '+ac+' postulaciones marcadas',100);lg('✅ Total: '+ac+' marcadas','success');
-  selected.clear();setTimeout(()=>{hp();loadJobs();loadStats()},1000)
-}
-
-function viewCV(id,tit,html){
-  document.getElementById('cvModalTitle').textContent='📄 CV — '+(tit||'Vacante');
-  document.getElementById('cvModal').classList.remove('modal-hidden');
-  const container=document.getElementById('cvFrameContainer');
-  if(html){container.innerHTML='<iframe id="cvFrame" srcdoc="'+html.replace(/"/g,'&quot;').replace(/\n/g,'')+'"></iframe>';document.getElementById('btnDlCV').style.display='inline-flex';return}
-  if(cvC[id]){container.innerHTML='<iframe id="cvFrame" srcdoc="'+cvC[id].replace(/"/g,'&quot;').replace(/\n/g,'')+'"></iframe>';document.getElementById('btnDlCV').style.display='inline-flex';return}
-}
-function downloadCurrentCV(){
-  const id=currentCVId;if(!id||!cvC[id])return;
-  const blob=new Blob([cvC[id]],{type:'text/html'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='CV_Alejandro_Gutierrez_'+(allJobs.find(j=>j.id===id)?.title||'vacante').replace(/[^a-zA-Z0-9]/g,'_').substring(0,40)+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url)
-}
-async function runScrape(){if(running)return;running=true;document.getElementById('btnScrape').classList.add('btn-primary');sp('Buscando vacantes en LinkedIn...',10);lg('🔍 Iniciando búsqueda con '+KW.length+' keywords...');try{const d=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords:KW,location:"Monterrey, Nuevo León, México",maxResults:50})});if(d.ok){sp('✅ '+d.scrape.total+' vacantes · '+d.scrape.stored+' guardadas',100);lg('✅ <b>'+d.scrape.total+'</b> totales · <b>'+d.scrape.matched+'</b> matcheadas ≥60% · <b>'+d.scrape.stored+'</b> guardadas','success');(d.jobs||[]).forEach(j=>lg('  • '+j.title+' — '+j.company))}else{sp('❌ Error',100);lg('❌ '+(d.error||'desconocido'),'error')}}catch(e){sp('❌ Error de conexión',100);lg('❌ '+e.message,'error')}setTimeout(()=>{hp();loadJobs();loadStats()},2000);running=false;document.getElementById('btnScrape').classList.remove('btn-primary')}
-async function runPipeline(){if(running)return;running=true;document.getElementById('btnPipeline').classList.add('btn-success');try{sp('🔍 Fase 1: Scraping LinkedIn...',10);lg('🔍 Buscando vacantes...');const sd=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords:KW,location:"Monterrey, Nuevo León, México",maxResults:30})});lg('✅ '+(sd.scrape?.total||0)+' vacantes encontradas','success');sp('📄 Fase 2: Generando CVs...',40);lg('📄 Generando CVs para mejores vacantes...');const jd=await api('/jobs?limit=30'),pj=(jd.jobs||[]).filter(j=>!j.applied).sort((a,b)=>b.match_score-a.match_score).slice(0,5);let cc=0;for(const job of pj){try{const cr=await api('/api/agent/cv/'+job.id,{method:'POST'});if(cr.ok){cvC[job.id]=cr.html;lg('  📄 '+job.title+' ('+job.match_score+'%)');cc++}}catch(e){lg('  ⚠️ Error CV: '+job.title)}}lg('✅ '+cc+' CVs generados','success');sp('✅ Pipeline completado',100);lg('🎯 <b>Pipeline completo!</b> Se generaron '+cc+' CVs. Usa los checkboxes para postularte manualmente.','success');setTimeout(()=>{hp();loadJobs();loadStats()},1000)}catch(e){sp('❌ Error',100);lg('❌ '+e.message,'error')}running=false;document.getElementById('btnPipeline').classList.remove('btn-success')}
+async function runScrape(){if(running)return;running=true;document.getElementById('btnScrape').classList.add('btn-p');sp('Buscando vacantes en LinkedIn...',10);lg('🔍 Iniciando búsqueda con '+keywords.length+' keywords...');try{const d=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords,location:"Monterrey, Nuevo León, México",maxResults:50})});if(d.ok){sp('✅ '+d.scrape.total+' vacantes · '+d.scrape.stored+' guardadas',100);lg('✅ <b>'+d.scrape.total+'</b> totales · <b>'+d.scrape.matched+'</b> matcheadas ≥60% · <b>'+d.scrape.stored+'</b> guardadas','success');(d.jobs||[]).forEach(j=>lg('  • '+j.title+' — '+j.company))}else{sp('❌ Error',100);lg('❌ '+(d.error||'desconocido'),'error')}}catch(e){sp('❌ Error de conexión',100);lg('❌ '+e.message,'error')}setTimeout(()=>{hp();loadJobs();loadStats()},2000);running=false;document.getElementById('btnScrape').classList.remove('btn-p')}
+async function runPipeline(){if(running)return;running=true;document.getElementById('btnPipeline').classList.add('btn-g');try{sp('🔍 Fase 1: Scraping LinkedIn...',10);lg('🔍 Buscando vacantes...');const sd=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords,location:"Monterrey, Nuevo León, México",maxResults:30})});lg('✅ '+(sd.scrape?.total||0)+' vacantes encontradas','success');sp('📄 Fase 2: Generando CVs...',40);lg('📄 Generando CVs...');const jd=await api('/jobs?limit=30'),pj=(jd.jobs||[]).filter(j=>!j.applied).sort((a,b)=>b.match_score-a.match_score).slice(0,5);let cc=0;for(const job of pj){try{const cr=await api('/api/agent/cv/'+job.id,{method:'POST'});if(cr.ok){cvC[job.id]=cr.html;lg('  📄 '+job.title+' ('+job.match_score+'%)');cc++}}catch(e){lg('  ⚠️ Error CV: '+job.title)}}lg('✅ '+cc+' CVs generados','success');sp('✅ Pipeline completado',100);lg('🎯 <b>Pipeline completo!</b> Se generaron '+cc+' CVs','success');setTimeout(()=>{hp();loadJobs();loadStats()},1000)}catch(e){sp('❌ Error',100);lg('❌ '+e.message,'error')}running=false;document.getElementById('btnPipeline').classList.remove('btn-g')}
 async function markApplied(id){try{const d=await api('/api/agent/mark-applied',{method:'POST',body:JSON.stringify({jobId:id})});if(d.ok){lg('✅ Postulación marcada','success');loadJobs();loadStats()}else{lg('❌ Error: '+d.error,'error')}}catch(e){lg('❌ '+e.message,'error')}}
-async function addManualJob(){const u=document.getElementById('manualUrl').value;if(!u)return;try{const d=await api('/jobs',{method:'POST',body:JSON.stringify({url:u,platform:'manual',title:u.split('/').pop()||'Manual'})});if(d.ok){closeManualModal();loadJobs();loadStats()}else alert('Error: '+(d.error||'no se pudo agregar'))}catch(e){alert('Error: '+e.message)}}
+async function addManualJob(){const u=document.getElementById('manualUrl').value;if(!u)return;try{const d=await api('/jobs',{method:'POST',body:JSON.stringify({url:u,platform:'manual',title:u.split('/').pop()||'Manual'})});if(d.ok){closeModal('manualModal');loadJobs();loadStats()}else alert('Error: '+(d.error||'no se pudo agregar'))}catch(e){alert('Error: '+e.message)}}
 function refreshAll(){loadStats();loadJobs()}
-refreshAll()
+renderKw();refreshAll()
+</script>
+</body>
+</html>
