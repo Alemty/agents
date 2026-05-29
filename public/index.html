@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Agent — Alemty</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg: #0a0a0f; --card: #14141f; --border: #2a2a3a; --accent: #6366f1; }
+    body { background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
+    .high { background: #065f4620; color: #34d399; border: 1px solid #065f46; }
+    .mid { background: #713f1220; color: #fbbf24; border: 1px solid #713f12; }
+    .low { background: #7f1d1d20; color: #f87171; border: 1px solid #7f1d1d; }
+    .glow { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-white">🤖 Job Agent</h1>
+        <p class="text-gray-400 text-sm">Alejandro Gutierrez Zavala — <span id="status" class="text-emerald-400">online</span></p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="refresh()" class="px-4 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-500 transition">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="card p-4 glow"><div class="text-gray-400 text-xs">Vacantes</div><div id="totalJobs" class="text-2xl font-bold text-white">-</div></div>
+      <div class="card p-4"><div class="text-gray-400 text-xs">Postulaciones</div><div id="totalApps" class="text-2xl font-bold text-white">-</div></div>
+      <div class="card p-4"><div class="text-gray-400 text-xs">Match Promedio</div><div id="avgMatch" class="text-2xl font-bold text-white">-</div></div>
+      <div class="card p-4"><div class="text-gray-400 text-xs">Hoy</div><div id="todayApps" class="text-2xl font-bold text-white">-</div></div>
+    </div>
+
+    <!-- Match Test -->
+    <div class="card p-6 mb-8">
+      <h2 class="text-lg font-semibold text-white mb-3">🧪 Probar Matching</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <input id="testTitle" placeholder="Título de la vacante" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm" />
+        <input id="testCompany" placeholder="Empresa (opcional)" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm" />
+      </div>
+      <textarea id="testDesc" rows="4" placeholder="Descripción de la vacante..." class="w-full bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm mb-3"></textarea>
+      <button onclick="testMatch()" class="px-6 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-500 transition">Analizar 🔍</button>
+      <div id="matchResult" class="mt-4 hidden"></div>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-white">📋 Vacantes</h2>
+        <div class="flex gap-2">
+          <select id="platformFilter" onchange="loadJobs()" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-3 py-1 text-sm text-white">
+            <option value="">Todas</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="indeed">Indeed</option>
+            <option value="computrabajo">Computrabajo</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+      </div>
+      <div id="jobsList" class="space-y-2 text-sm"><p class="text-gray-500">No data yet. Add jobs via API or wait for scraping.</p></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        headers: { 'Content-Type': 'application/json', ...opts.headers },
+        ...opts,
+      });
+      return res.json();
+    }
+
+    async function loadStats() {
+      const data = await api('/stats');
+      if (!data.ok) return;
+      const s = data.stats;
+      document.getElementById('totalJobs').textContent = s.totalJobs;
+      document.getElementById('totalApps').textContent = s.appliedJobs;
+      document.getElementById('avgMatch').textContent = s.averageMatchScore + '%';
+      document.getElementById('todayApps').textContent = s.todayApplications + '/' + s.maxDailyApplications;
+    }
+
+    async function loadJobs() {
+      const platform = document.getElementById('platformFilter').value;
+      const params = new URLSearchParams({ limit: '20' });
+      if (platform) params.set('platform', platform);
+
+      const data = await api('/jobs?' + params.toString());
+      const list = document.getElementById('jobsList');
+
+      if (!data.ok || !data.jobs.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay vacantes que coincidan con el filtro.</p>';
+        return;
+      }
+
+      list.innerHTML = data.jobs.map(j => {
+        const badge = j.match_score >= 60 ? 'high' : j.match_score >= 30 ? 'mid' : 'low';
+        const icon = j.match_score >= 60 ? '✅' : j.match_score >= 30 ? '⚠️' : '❌';
+        return `<div class="card px-4 py-3 flex items-center justify-between">
+          <div class="flex-1">
+            <div class="font-medium text-white">${icon} ${j.title}</div>
+            <div class="text-gray-400 text-xs">${j.company || '?'} · ${j.platform} · ${j.location || '?'}</div>
+            ${j.matched_skills_json ? `<div class="text-gray-500 text-xs mt-1">${JSON.parse(j.matched_skills_json).slice(0,5).join(', ')}</div>` : ''}
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="badge ${badge}">${j.match_score}%</span>
+            ${j.url ? `<a href="${j.url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs">🔗</a>` : ''}
+            ${j.applied ? '<span class="badge high">✅ Applied</span>' : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function testMatch() {
+      const title = document.getElementById('testTitle').value;
+      const desc = document.getElementById('testDesc').value;
+      const result = document.getElementById('matchResult');
+
+      if (!title || !desc) {
+        result.className = 'mt-4 text-red-400';
+        result.textContent = '❌ Título y descripción requeridos';
+        result.classList.remove('hidden');
+        return;
+      }
+
+      const data = await api('/match', {
+        method: 'POST',
+        body: JSON.stringify({ title, description: desc }),
+      });
+
+      result.className = 'mt-4';
+      if (data.ok) {
+        const m = data.match;
+        const icon = m.score >= 60 ? '✅' : m.score >= 30 ? '⚠️' : '❌';
+        result.innerHTML = `
+          <div class="card p-4">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-2xl">${icon}</span>
+              <span class="text-xl font-bold text-white">${m.score}% Match</span>
+              <span class="text-gray-400 text-sm">${m.keywordHits} keywords</span>
+            </div>
+            <div class="text-sm text-gray-300 mb-2">${m.matched.slice(0,15).join(' · ')}</div>
+            ${m.missing.length ? `<div class="text-xs text-amber-400">📚 Aprender: ${m.missing.join(', ')}</div>` : ''}
+            <div class="text-xs text-gray-500 mt-1">${m.analysis}</div>
+          </div>`;
+      } else {
+        result.innerHTML = `<div class="text-red-400">❌ Error: ${data.error}</div>`;
+      }
+      result.classList.remove('hidden');
+    }
+
+    refresh();
+    function refresh() { loadStats(); loadJobs(); }
+  </script>
+</body>
+</html>

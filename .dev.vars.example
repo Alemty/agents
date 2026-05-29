@@ -1,0 +1,6 @@
+# LinkedIn credentials (for automatic scraping)
+LINKEDIN_EMAIL=your_email@example.com
+LINKEDIN_PASSWORD=your_password
+
+# AI API keys (for enhanced matching)
+ANTHROPIC_API_KEY=sk-ant-...

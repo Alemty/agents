@@ -1,0 +1,22 @@
+{
+  "name": "job-agent-workers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "cf-typegen": "wrangler types",
+    "seed": "node scripts/seed.js",
+    "test": "echo ok"
+  },
+  "dependencies": {
+    "hono": "^4.12.12",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.12.0",
+    "@cloudflare/workers-types": "^4.20250410.0"
+  }
+}

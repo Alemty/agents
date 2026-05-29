@@ -1,0 +1,29 @@
+name = "job-agent"
+main = "src/index.ts"
+compatibility_date = "2026-04-11"
+
+# Assets (frontend dashboard)
+[assets]
+directory = "./public"
+not_found_handling = "single-page-application"
+
+# D1 database (jobs, applications, stats)
+[[d1_databases]]
+binding = "DB"
+database_name = "jobs-db"
+database_id = ""
+
+# Environment variables
+[vars]
+MATCH_THRESHOLD = "60"
+MAX_APPLICATIONS_DAY = "20"
+
+# Secrets (set via wrangler secret put)
+# LINKEDIN_EMAIL=
+# LINKEDIN_PASSWORD=
+# ANTHROPIC_API_KEY=
+
+# Routes
+routes = [
+  { pattern = "agents.alemty.eth.limo", custom_domain = true }
+]
