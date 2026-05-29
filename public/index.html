@@ -224,7 +224,7 @@
     const API = window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'?'http://localhost:3000':'';
     const KW=["Supervisor de Ventas","Coordinador","Vendedor","Ejecutivo de Ventas","Asesor de Ventas","Merchandiser","Capacitador","Sales Trainer","Retail Supervisor","Jefe de Sector","Coordinador Retail","Servicio al Cliente","Call Center","Analista de Datos","Soporte Técnico","Desarrollador Web","Frontend"];
     let running=false,cvC={};
-    async function api(p,o){return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json());}
+    async function api(p,o){o=o||{};return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json());}
     function m(e){e.classList.toggle('modal-hidden');}
     function showManualModal(){m(document.getElementById('manualModal'));}
     function closeManualModal(){m(document.getElementById('manualModal'));}
