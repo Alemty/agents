@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-worker:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare Workers
+    name: Deploy Worker to Cloudflare
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +25,22 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           command: deploy
+
+  d1-migrations:
+    runs-on: ubuntu-latest
+    name: Run D1 Migrations
+    needs: deploy-worker
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Run D1 migrations
         uses: cloudflare/wrangler-action@v3
