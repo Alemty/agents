@@ -14,56 +14,116 @@
     .mid { background: #713f1220; color: #fbbf24; border: 1px solid #713f12; }
     .low { background: #7f1d1d20; color: #f87171; border: 1px solid #7f1d1d; }
     .glow { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
+    .modal-overlay { background: rgba(0,0,0,0.7); }
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="p-4 md:p-8">
   <div class="max-w-6xl mx-auto">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-white">🤖 Job Agent</h1>
-        <p class="text-gray-400 text-sm">Alejandro Gutierrez Zavala — <span id="status" class="text-emerald-400">online</span></p>
+        <p class="text-gray-400 text-sm">Alejandro Gutierrez Zavala · <span id="status" class="text-emerald-400">online</span></p>
       </div>
       <div class="flex gap-2">
-        <button onclick="refresh()" class="px-4 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-500 transition">🔄 Refresh</button>
+        <button onclick="refreshAll()" class="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600 transition">🔄 Refrescar</button>
       </div>
     </div>
 
     <!-- Stats Grid -->
-    <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="card p-4 glow"><div class="text-gray-400 text-xs">Vacantes</div><div id="totalJobs" class="text-2xl font-bold text-white">-</div></div>
       <div class="card p-4"><div class="text-gray-400 text-xs">Postulaciones</div><div id="totalApps" class="text-2xl font-bold text-white">-</div></div>
       <div class="card p-4"><div class="text-gray-400 text-xs">Match Promedio</div><div id="avgMatch" class="text-2xl font-bold text-white">-</div></div>
       <div class="card p-4"><div class="text-gray-400 text-xs">Hoy</div><div id="todayApps" class="text-2xl font-bold text-white">-</div></div>
     </div>
 
-    <!-- Match Test -->
-    <div class="card p-6 mb-8">
-      <h2 class="text-lg font-semibold text-white mb-3">🧪 Probar Matching</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <input id="testTitle" placeholder="Título de la vacante" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm" />
-        <input id="testCompany" placeholder="Empresa (opcional)" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm" />
+    <!-- Action Buttons -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <button onclick="runScrape()" id="btnScrape" class="card p-4 hover:border-indigo-500 transition text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🔍</span>
+          <div>
+            <div class="font-semibold text-white">Buscar Vacantes</div>
+            <div class="text-xs text-gray-400">Scrapea LinkedIn con tus keywords</div>
+          </div>
+        </div>
+      </button>
+
+      <button onclick="runPipeline()" id="btnPipeline" class="card p-4 hover:border-emerald-500 transition text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">⚡</span>
+          <div>
+            <div class="font-semibold text-white">Pipeline Completo</div>
+            <div class="text-xs text-gray-400">Scrape + Match + CV + Postulación</div>
+          </div>
+        </div>
+      </button>
+
+      <button onclick="showManualAdd()" class="card p-4 hover:border-amber-500 transition text-left">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">📝</span>
+          <div>
+            <div class="font-semibold text-white">Agregar Vacante</div>
+            <div class="text-xs text-gray-400">Pega una URL de LinkedIn</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Progress / Logs -->
+    <div id="progressBar" class="hidden card p-4 mb-6">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="spinner w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full"></div>
+        <span id="progressText" class="text-sm text-gray-300">Procesando...</span>
       </div>
-      <textarea id="testDesc" rows="4" placeholder="Descripción de la vacante..." class="w-full bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm mb-3"></textarea>
-      <button onclick="testMatch()" class="px-6 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-500 transition">Analizar 🔍</button>
-      <div id="matchResult" class="mt-4 hidden"></div>
+      <div class="w-full bg-gray-800 rounded-full h-2">
+        <div id="progressFill" class="bg-indigo-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+      </div>
+      <div id="logOutput" class="mt-2 text-xs text-gray-500 max-h-24 overflow-y-auto"></div>
+    </div>
+
+    <!-- CV Modal -->
+    <div id="cvModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+      <div class="card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
+        <button onclick="closeCV()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+        <div id="cvContent"></div>
+      </div>
+    </div>
+
+    <!-- Manual Add Modal -->
+    <div id="manualModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+      <div class="card max-w-lg w-full p-6 relative">
+        <button onclick="closeManual()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
+        <h3 class="text-lg font-semibold text-white mb-4">📝 Agregar Vacante Manual</h3>
+        <input id="manualUrl" placeholder="URL de LinkedIn (ej: https://www.linkedin.com/jobs/view/...)" class="w-full bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm mb-3" />
+        <button onclick="addManualJob()" class="px-6 py-2 bg-amber-600 rounded-lg text-sm hover:bg-amber-500 transition">Agregar</button>
+      </div>
     </div>
 
     <!-- Jobs Table -->
     <div class="card p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-white">📋 Vacantes</h2>
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center">
           <select id="platformFilter" onchange="loadJobs()" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-3 py-1 text-sm text-white">
             <option value="">Todas</option>
             <option value="linkedin">LinkedIn</option>
-            <option value="indeed">Indeed</option>
-            <option value="computrabajo">Computrabajo</option>
             <option value="manual">Manual</option>
           </select>
+          <select id="statusFilter" onchange="loadJobs()" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-3 py-1 text-sm text-white">
+            <option value="">Todos</option>
+            <option value="applied">Postulados</option>
+            <option value="pending">Pendientes</option>
+          </select>
+          <span id="jobsCount" class="text-xs text-gray-500"></span>
         </div>
       </div>
-      <div id="jobsList" class="space-y-2 text-sm"><p class="text-gray-500">No data yet. Add jobs via API or wait for scraping.</p></div>
+      <div id="jobsList" class="space-y-2 text-sm">
+        <p class="text-gray-500">No hay datos. Usa los botones de arriba para buscar vacantes.</p>
+      </div>
     </div>
   </div>
 
@@ -72,6 +132,9 @@
       ? 'http://localhost:3000'
       : '';
 
+    let scraping = false;
+
+    // --- API helper ---
     async function api(path, opts = {}) {
       const res = await fetch(API + path, {
         headers: { 'Content-Type': 'application/json', ...opts.headers },
@@ -80,6 +143,29 @@
       return res.json();
     }
 
+    // --- Modals ---
+    function showManualAdd() { document.getElementById('manualModal').classList.remove('hidden'); }
+    function closeManual() { document.getElementById('manualModal').classList.add('hidden'); }
+    function closeCV() { document.getElementById('cvModal').classList.add('hidden'); }
+
+    // --- Progress ---
+    function showProgress(text, pct) {
+      const bar = document.getElementById('progressBar');
+      bar.classList.remove('hidden');
+      document.getElementById('progressText').textContent = text;
+      document.getElementById('progressFill').style.width = pct + '%';
+    }
+    function log(msg) {
+      const el = document.getElementById('logOutput');
+      el.innerHTML += '<div>' + msg + '</div>';
+      el.scrollTop = el.scrollHeight;
+    }
+    function hideProgress() {
+      document.getElementById('progressBar').classList.add('hidden');
+      document.getElementById('logOutput').innerHTML = '';
+    }
+
+    // --- Load Data ---
     async function loadStats() {
       const data = await api('/stats');
       if (!data.ok) return;
@@ -92,75 +178,192 @@
 
     async function loadJobs() {
       const platform = document.getElementById('platformFilter').value;
-      const params = new URLSearchParams({ limit: '20' });
+      const status = document.getElementById('statusFilter').value;
+      const params = new URLSearchParams({ limit: '50' });
       if (platform) params.set('platform', platform);
 
       const data = await api('/jobs?' + params.toString());
       const list = document.getElementById('jobsList');
+      document.getElementById('jobsCount').textContent = data.jobs?.length || 0;
 
-      if (!data.ok || !data.jobs.length) {
-        list.innerHTML = '<p class="text-gray-500">No hay vacantes que coincidan con el filtro.</p>';
+      if (!data.ok || !data.jobs || !data.jobs.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay vacantes.</p>';
         return;
       }
 
-      list.innerHTML = data.jobs.map(j => {
+      // Filter by status client-side
+      let jobs = data.jobs;
+      if (status === 'applied') jobs = jobs.filter(j => j.applied);
+      if (status === 'pending') jobs = jobs.filter(j => !j.applied);
+
+      if (!jobs.length) {
+        list.innerHTML = '<p class="text-gray-500">No hay vacantes con ese filtro.</p>';
+        return;
+      }
+
+      list.innerHTML = jobs.map(j => {
         const badge = j.match_score >= 60 ? 'high' : j.match_score >= 30 ? 'mid' : 'low';
         const icon = j.match_score >= 60 ? '✅' : j.match_score >= 30 ? '⚠️' : '❌';
-        return `<div class="card px-4 py-3 flex items-center justify-between">
-          <div class="flex-1">
-            <div class="font-medium text-white">${icon} ${j.title}</div>
-            <div class="text-gray-400 text-xs">${j.company || '?'} · ${j.platform} · ${j.location || '?'}</div>
-            ${j.matched_skills_json ? `<div class="text-gray-500 text-xs mt-1">${JSON.parse(j.matched_skills_json).slice(0,5).join(', ')}</div>` : ''}
+        const skills = j.matched_skills_json ? JSON.parse(j.matched_skills_json) : [];
+        return `<div class="card px-4 py-3 flex items-center justify-between hover:border-gray-600 transition">
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-white truncate">${icon} ${j.title}</div>
+            <div class="text-gray-400 text-xs truncate">${j.company || '?'} · ${j.location || '?'}</div>
+            ${skills.length ? `<div class="text-gray-500 text-xs mt-1 truncate">${skills.slice(0,5).join(', ')}</div>` : ''}
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 shrink-0 ml-3">
             <span class="badge ${badge}">${j.match_score}%</span>
-            ${j.url ? `<a href="${j.url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs">🔗</a>` : ''}
-            ${j.applied ? '<span class="badge high">✅ Applied</span>' : ''}
+            ${j.url ? `<a href="${j.url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs" title="Ver en LinkedIn">🔗</a>` : ''}
+            <button onclick="viewCV('${j.id}')" class="text-emerald-400 hover:text-emerald-300 text-xs" title="Ver CV">📄</button>
+            ${j.applied ? '<span class="badge high">✅ Aplicado</span>' : `<button onclick="markApplied('${j.id}')" class="text-xs text-amber-400 hover:text-amber-300">Postular</button>`}
           </div>
         </div>`;
       }).join('');
     }
 
-    async function testMatch() {
-      const title = document.getElementById('testTitle').value;
-      const desc = document.getElementById('testDesc').value;
-      const result = document.getElementById('matchResult');
+    // --- Actions ---
 
-      if (!title || !desc) {
-        result.className = 'mt-4 text-red-400';
-        result.textContent = '❌ Título y descripción requeridos';
-        result.classList.remove('hidden');
-        return;
+    async function runScrape() {
+      if (scraping) return;
+      scraping = true;
+      document.getElementById('btnScrape').classList.add('opacity-50', 'pointer-events-none');
+      showProgress('Buscando vacantes en LinkedIn...', 10);
+
+      log('🔍 Iniciando scrape...');
+      try {
+        const data = await api('/api/scrape', {
+          method: 'POST',
+          body: JSON.stringify({
+            keywords: [
+              "Supervisor de Ventas", "Coordinador", "Vendedor",
+              "Ejecutivo de Ventas", "Asesor de Ventas", "Merchandiser",
+              "Capacitador", "Sales Trainer", "Retail Supervisor",
+              "Jefe de Sector", "Coordinador Retail", "Servicio al Cliente",
+              "Call Center", "Analista de Datos", "Soporte Técnico"
+            ],
+            location: "Monterrey, Nuevo León, México",
+            maxResults: 50
+          })
+        });
+
+        if (data.ok) {
+          showProgress(`✅ ${data.scrape.total} vacantes encontradas, ${data.scrape.stored} nuevas almacenadas`, 100);
+          log(`✅ Total: ${data.scrape.total} · Matched: ${data.scrape.matched} · Nuevas: ${data.scrape.stored}`);
+          data.jobs.forEach(j => log(`  • ${j.title} — ${j.company}`));
+        } else {
+          showProgress(`❌ Error: ${data.error}`, 100);
+          log(`❌ ${data.error}`);
+        }
+      } catch (e) {
+        showProgress(`❌ Error de conexión: ${e.message}`, 100);
+        log(`❌ ${e.message}`);
       }
 
-      const data = await api('/match', {
-        method: 'POST',
-        body: JSON.stringify({ title, description: desc }),
-      });
-
-      result.className = 'mt-4';
-      if (data.ok) {
-        const m = data.match;
-        const icon = m.score >= 60 ? '✅' : m.score >= 30 ? '⚠️' : '❌';
-        result.innerHTML = `
-          <div class="card p-4">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="text-2xl">${icon}</span>
-              <span class="text-xl font-bold text-white">${m.score}% Match</span>
-              <span class="text-gray-400 text-sm">${m.keywordHits} keywords</span>
-            </div>
-            <div class="text-sm text-gray-300 mb-2">${m.matched.slice(0,15).join(' · ')}</div>
-            ${m.missing.length ? `<div class="text-xs text-amber-400">📚 Aprender: ${m.missing.join(', ')}</div>` : ''}
-            <div class="text-xs text-gray-500 mt-1">${m.analysis}</div>
-          </div>`;
-      } else {
-        result.innerHTML = `<div class="text-red-400">❌ Error: ${data.error}</div>`;
-      }
-      result.classList.remove('hidden');
+      setTimeout(() => { hideProgress(); loadJobs(); loadStats(); }, 2000);
+      scraping = false;
+      document.getElementById('btnScrape').classList.remove('opacity-50', 'pointer-events-none');
     }
 
-    refresh();
-    function refresh() { loadStats(); loadJobs(); }
+    async function runPipeline() {
+      if (scraping) return;
+      scraping = true;
+      document.getElementById('btnPipeline').classList.add('opacity-50', 'pointer-events-none');
+      showProgress('🚀 Ejecutando pipeline completo...', 5);
+
+      log('🔍 Fase 1: Scraping LinkedIn...');
+      try {
+        const scrapeData = await api('/api/scrape', {
+          method: 'POST',
+          body: JSON.stringify({
+            keywords: [
+              "Supervisor de Ventas", "Coordinador", "Vendedor",
+              "Ejecutivo de Ventas", "Asesor de Ventas", "Merchandiser",
+              "Capacitador", "Sales Trainer", "Retail Supervisor",
+              "Jefe de Sector", "Coordinador Retail", "Servicio al Cliente",
+              "Call Center", "Analista de Datos", "Soporte Técnico"
+            ],
+            location: "Monterrey, Nuevo León, México",
+            maxResults: 50
+          })
+        });
+        log(`✅ ${scrapeData.scrape?.total || 0} vacantes encontradas`);
+        showProgress('📄 Fase 2: Generando CVs...', 40);
+
+        const cvData = await api('/api/agent/run', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'cv', maxResults: 50 })
+        });
+        log(`✅ ${cvData.generated || 0} CVs generados`);
+        showProgress('📋 Fase 3: Marcando postulaciones...', 70);
+
+        const applyData = await api('/api/agent/run', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'apply', maxApply: 10 })
+        });
+        log(`✅ ${applyData.applied || 0} postulaciones marcadas`);
+        showProgress('✅ Pipeline completo', 100);
+        log('🎯 Listo! Revisa las vacantes abajo.');
+      } catch (e) {
+        showProgress(`❌ Error: ${e.message}`, 100);
+        log(`❌ ${e.message}`);
+      }
+
+      setTimeout(() => { hideProgress(); loadJobs(); loadStats(); }, 2000);
+      scraping = false;
+      document.getElementById('btnPipeline').classList.remove('opacity-50', 'pointer-events-none');
+    }
+
+    async function viewCV(jobId) {
+      document.getElementById('cvContent').innerHTML = '<div class="text-gray-400">Cargando CV...</div>';
+      document.getElementById('cvModal').classList.remove('hidden');
+      try {
+        const data = await api('/api/agent/cv/' + jobId);
+        if (data.ok && data.cvHtml) {
+          document.getElementById('cvContent').innerHTML = data.cvHtml;
+        } else {
+          document.getElementById('cvContent').innerHTML = '<div class="text-red-400">❌ No se pudo generar el CV para esta vacante.</div>';
+        }
+      } catch (e) {
+        document.getElementById('cvContent').innerHTML = `<div class="text-red-400">❌ Error: ${e.message}</div>`;
+      }
+    }
+
+    async function markApplied(jobId) {
+      try {
+        const data = await api('/api/agent/run', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'apply', jobId })
+        });
+        loadJobs();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function addManualJob() {
+      const url = document.getElementById('manualUrl').value;
+      if (!url) return;
+
+      try {
+        const data = await api('/jobs', {
+          method: 'POST',
+          body: JSON.stringify({ url, platform: 'manual' })
+        });
+        if (data.ok) {
+          closeManual();
+          loadJobs();
+          loadStats();
+        } else {
+          alert('Error: ' + (data.error || 'no se pudo agregar'));
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    // --- Init ---
+    function refreshAll() { loadStats(); loadJobs(); }
+    refreshAll();
   </script>
 </body>
 </html>
