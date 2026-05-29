@@ -287,64 +287,61 @@ app.post("/api/scrape", async (c) => {
   const scraper = new LinkedInScraper(email, password);
   const jobs = await scraper.scrapeJobs(options);
 
-  // Optionally run matching and store
-  let matched = 0;
+  // Store ALL found jobs with their match scores (including low-match)
+  let matchedCount = 0;
   let stored = 0;
+  const engine = new MatchEngine();
+  const db = c.env.DB;
 
-  if (body.autoMatch !== false) {
-    const engine = new MatchEngine();
-    const db = c.env.DB;
+  for (const job of jobs) {
+    // Check duplicate
+    const existing = await db.prepare("SELECT id FROM jobs WHERE url = ?").bind(job.url).first();
+    if (existing) continue;
 
-    for (const job of jobs) {
-      // Check duplicate
-      const existing = await db.prepare("SELECT id FROM jobs WHERE url = ?").bind(job.url).first();
-      if (existing) continue;
+    const match = engine.calculateMatch({
+      title: job.title,
+      description: job.description,
+      skills: job.skills,
+    });
 
-      const match = engine.calculateMatch({
-        title: job.title,
-        description: job.description,
-        skills: job.skills,
-      });
+    // Store EVERY job (no threshold filter) so frontend shows all
+    await db.prepare(
+      `INSERT INTO jobs (id, platform, title, company, location, description, url, modality, salary, skills_json, match_score, matched_skills_json, missing_skills_json, keyword_hits, analysis, scraped_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      "linkedin",
+      job.title,
+      job.company,
+      job.location,
+      job.description,
+      job.url,
+      job.modality,
+      job.salary,
+      JSON.stringify(job.skills),
+      match.score,
+      JSON.stringify(match.matched),
+      JSON.stringify(match.missing),
+      match.keywordHits,
+      match.analysis,
+      new Date().toISOString()
+    ).run();
 
-      if (match.score >= Number(c.env.MATCH_THRESHOLD || 60)) {
-        await db.prepare(
-          `INSERT INTO jobs (id, platform, title, company, location, description, url, modality, salary, skills_json, match_score, matched_skills_json, missing_skills_json, keyword_hits, analysis, scraped_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-          crypto.randomUUID(),
-          "linkedin",
-          job.title,
-          job.company,
-          job.location,
-          job.description,
-          job.url,
-          job.modality,
-          job.salary,
-          JSON.stringify(job.skills),
-          match.score,
-          JSON.stringify(match.matched),
-          JSON.stringify(match.missing),
-          match.keywordHits,
-          match.analysis,
-          new Date().toISOString()
-        ).run();
-        stored++;
-      }
-      matched++;
-    }
+    if (match.score >= Number(c.env.MATCH_THRESHOLD || 60)) matchedCount++;
+    stored++;
   }
 
   return c.json({
     ok: true,
     scrape: {
       total: jobs.length,
-      matched,
+      matched: matchedCount,
       stored,
       threshold: Number(c.env.MATCH_THRESHOLD || 60),
       keywords: options.keywords,
       location: options.location,
     },
-    jobs: jobs.slice(0, 5).map((j) => ({
+    jobs: jobs.slice(0, 10).map((j) => ({
       title: j.title,
       company: j.company,
       location: j.location,
