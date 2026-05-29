@@ -30,7 +30,7 @@ jobs:
 
       - name: Upload ipfs/ to Pinata
         env:
-          PINATA_JWT: ${{ secrets.AGENT_JWT }}
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
         run: |
           npm init -y >/dev/null
           npm install got form-data recursive-fs base-path-converter >/dev/null
