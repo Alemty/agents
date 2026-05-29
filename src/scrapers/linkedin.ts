@@ -152,45 +152,46 @@ export class LinkedInScraper {
   private parseGuestJobCards(html: string): any[] {
     const cards: any[] = [];
     
-    // LinkedIn uses base-card class in guest API
-    const cardRegex = /<div[^>]*class="[^"]*base-card[^"]*job-search-card[^"]*"[^>]*data-entity-urn="urn:li:jobPosting:(\d+)"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/gi;
-    let match;
+    // Find all jobPosting IDs and their surrounding context
+    // LinkedIn uses: data-entity-urn="urn:li:jobPosting:4419559177"
+    const idRegex = /data-entity-urn="urn:li:jobPosting:(\d+)"/g;
+    const titleRegex = /<h3[^>]*class="[^"]*base-search-card__title[^"]*"[^>]*>\s*([\s\S]*?)\s*<\/h3>/gi;
+    const companyRegex = /<h4[^>]*class="[^"]*base-search-card__subtitle[^"]*"[^>]*>([\s\S]*?)<\/h4>/gi;
+    const locationRegex = /class="[^"]*job-search-card__location[^"]*"[^>]*>([\s\S]*?)</gi;
+    const timeRegex = /<time[^>]*>([\s\S]*?)<\/time>/gi;
 
-    while ((match = cardRegex.exec(html)) !== null) {
-      const jobId = match[1];
-      const cardHtml = match[2];
+    const ids: string[] = [];
+    let m;
+    while ((m = idRegex.exec(html)) !== null) ids.push(m[1]);
 
-      // Extract title from h3 with class base-search-card__title
-      const titleMatch = cardHtml.match(/<h3[^>]*class="[^"]*base-search-card__title[^"]*"[^>]*>\s*([\s\S]*?)\s*<\/h3>/i)
-        || cardHtml.match(/<span class="sr-only">\s*([\s\S]*?)\s*<\/span>/i);
-      const title = titleMatch ? this.cleanText(titleMatch[1]) : "";
+    const titles: string[] = [];
+    while ((m = titleRegex.exec(html)) !== null) titles.push(this.cleanText(m[1]));
 
-      // Extract company (h4 with class base-search-card__subtitle)
-      const companyMatch = cardHtml.match(/<h4[^>]*class="[^"]*base-search-card__subtitle[^"]*"[^>]*>([\s\S]*?)<\/h4>/i)
-        || cardHtml.match(/class="[^"]*hidden-nested-link[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
-      const company = companyMatch ? this.cleanText(companyMatch[1]) : "";
+    const companies: string[] = [];
+    while ((m = companyRegex.exec(html)) !== null) companies.push(this.cleanText(m[1]));
 
-      // Extract location
-      const locationMatch = cardHtml.match(/class="[^"]*job-search-card__location[^"]*"[^>]*>([\s\S]*?)<\/span>/i)
-        || cardHtml.match(/<span[^>]*class="[^"]*base-search-card__metadata[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
-      const location = locationMatch ? this.cleanText(locationMatch[1]) : "";
+    const locations: string[] = [];
+    while ((m = locationRegex.exec(html)) !== null) locations.push(this.cleanText(m[1]));
 
-      // Extract posted time
-      const timeMatch = cardHtml.match(/class="[^"]*job-search-card__listed-state[^"]*"[^>]*>\s*<time[^>]*>([\s\S]*?)<\/time>/i)
-        || cardHtml.match(/<time[^>]*>([\s\S]*?)<\/time>/i);
-      const postedAt = timeMatch ? this.cleanText(timeMatch[1]) : "";
+    const times: string[] = [];
+    while ((m = timeRegex.exec(html)) !== null) times.push(this.cleanText(m[1]));
 
-      // Extract salary
-      const salaryMatch = cardHtml.match(/\$[\d,]+[\s-]*\$?[\d,]*/g);
-      const salary = salaryMatch ? salaryMatch[0] : null;
+    // Match them by index (they appear in same order in the HTML)
+    const count = Math.max(ids.length, titles.length, companies.length);
+    for (let i = 0; i < count; i++) {
+      const jobId = ids[i];
+      const title = titles[i];
+      const company = companies[i];
+      const location = locations[i];
+      const postedAt = times[i] || "";
 
       if (jobId && title) {
         cards.push({
           id: jobId,
           title,
-          company,
-          location,
-          salary,
+          company: company || "",
+          location: location || "",
+          salary: null,
           modality: "",
           description: "",
           postedAt,
