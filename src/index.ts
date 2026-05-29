@@ -16,7 +16,11 @@ export type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.use("/*", cors());
+app.use("/*", cors({
+  origin: ["http://localhost:3000", "https://job-agent.alejandrogtzz93.workers.dev", "https://alemty.eth.limo"],
+  allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+}));
 
 // ---------------------------
 // Health check
