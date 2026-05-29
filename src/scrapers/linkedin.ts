@@ -32,22 +32,26 @@ const BROWSER_RUN_URL = "https://browser-run.cdp.792fb5a1c2fb0af960074a1e869db0e
  */
 async function quickFetch(url: string): Promise<string | null> {
   try {
+    const payload = JSON.stringify({
+      url,
+      output: "html",
+      wait_until: "networkidle2",
+      timeout: 30000,
+      viewport: { width: 1280, height: 720 },
+    });
+    console.log(`[BrowserRun] POST ${BROWSER_RUN_URL} len=${payload.length}`);
     const res = await fetch(BROWSER_RUN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url,
-        output: "html",
-        wait_until: "networkidle2",
-        timeout: 30000,
-        viewport: { width: 1280, height: 720 },
-      }),
+      body: payload,
     });
+    const body = await res.text();
+    console.log(`[BrowserRun] HTTP ${res.status}: ${body.slice(0, 500)}`);
     if (!res.ok) {
-      console.error(`[BrowserRun] HTTP ${res.status}: ${await res.text()}`);
+      console.error(`[BrowserRun] HTTP ${res.status}: ${body}`);
       return null;
     }
-    const data = await res.json<any>();
+    const data = JSON.parse(body);
     return data?.html || null;
   } catch (e) {
     console.error(`[BrowserRun] Error: ${e}`);

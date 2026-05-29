@@ -368,6 +368,93 @@ app.get("/api/scrape/status", async (c) => {
   });
 });
 
+// GET /api/debug/browser-run — Test Browser Run Quick Actions endpoint directly
+app.get("/api/debug/browser-run", async (c) => {
+  const testUrl = c.req.query("url") || "https://www.google.com";
+  const browserRunUrl = "https://browser-run.cdp.792fb5a1c2fb0af960074a1e869db0ed.workers.dev/";
+
+  try {
+    const res = await fetch(browserRunUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: testUrl,
+        output: "html",
+        wait_until: "load",
+        timeout: 20000,
+        viewport: { width: 1280, height: 720 },
+      }),
+    });
+
+    const status = res.status;
+    const text = await res.text();
+
+    return c.json({
+      ok: status === 200,
+      endpoint: browserRunUrl,
+      testUrl,
+      status,
+      responsePreview: text.slice(0, 1000),
+    });
+  } catch (e: any) {
+    return c.json({
+      ok: false,
+      endpoint: browserRunUrl,
+      testUrl,
+      error: e.message,
+      stack: e.stack?.slice(0, 500),
+    });
+  }
+});
+
+// GET /api/debug/scraper-test — Test scraper with minimal config
+app.get("/api/debug/scraper-test", async (c) => {
+  const testUrl = c.req.query("url") || "https://www.linkedin.com/jobs/search/?keywords=Supervisor&location=Monterrey&sortBy=DD";
+
+  const browserRunUrl = "https://browser-run.cdp.792fb5a1c2fb0af960074a1e869db0ed.workers.dev/";
+
+  try {
+    const res = await fetch(browserRunUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: testUrl,
+        output: "html",
+        wait_until: "load",
+        timeout: 30000,
+        viewport: { width: 1280, height: 720 },
+      }),
+    });
+
+    const status = res.status;
+    const body = await res.text();
+
+    // Try to extract job titles from the HTML
+    const titleMatches = body.match(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)?.slice(0, 10) || [];
+    const jobUrlMatches = body.match(/\/jobs\/view\/\d+/g)?.slice(0, 10) || [];
+
+    return c.json({
+      ok: status === 200,
+      endpoint: browserRunUrl,
+      testUrl,
+      status,
+      htmlLength: body.length,
+      htmlPreview: body.slice(0, 3000),
+      jobTitlesFound: titleMatches.length,
+      jobTitles: titleMatches.map(t => t.replace(/<[^>]*>/g, '').trim()).filter(Boolean),
+      jobUrlsFound: jobUrlMatches.length,
+      jobUrls: jobUrlMatches,
+    });
+  } catch (e: any) {
+    return c.json({
+      ok: false,
+      endpoint: browserRunUrl,
+      testUrl,
+      error: e.message,
+    });
+  }
+});
+
 // ---------------------------
 // SPA fallback — serve index.html for non-API routes
 // ---------------------------
