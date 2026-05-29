@@ -14,6 +14,10 @@ binding = "DB"
 database_name = "jobs-db"
 database_id = "849ffb99-99bd-427d-95d1-c84166738ac7"
 
+# Browser Rendering binding (LinkedIn scraping)
+[browser_rendering]
+binding = "BROWSER_RENDERING"
+
 # Environment variables
 [vars]
 MATCH_THRESHOLD = "60"

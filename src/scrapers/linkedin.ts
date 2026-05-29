@@ -28,10 +28,12 @@ export class LinkedInScraper {
   private email: string;
   private password: string;
   private baseUrl = "https://www.linkedin.com";
+  private browser: any;
 
-  constructor(email: string, password: string) {
+  constructor(email: string, password: string, browser?: any) {
     this.email = email;
     this.password = password;
+    this.browser = browser;
   }
 
   /**
@@ -120,17 +122,23 @@ export class LinkedInScraper {
 
   /**
    * Use Cloudflare Browser Rendering API to get page HTML
+   * Uses the Fetcher binding (BROWSER_RENDERING) when available
    */
   private async browseUrl(url: string): Promise<{ html: string; cookies: string } | null> {
     try {
-      // Cloudflare Browser Rendering API endpoint
-      const browserEndpoint = `https://browser-rendering.cdp.${this.getAccountId()}.workers.dev`;
+      // If we have a Browser Rendering binding, use it directly
+      if (this.browser) {
+        return await this.useBrowserBinding(url);
+      }
 
-      // First login if needed
-      const loginResult = await this.ensureLoggedIn(browserEndpoint);
-      if (!loginResult) return null;
+      // Fallback: try the CDP-style Browser Rendering URL
+      const browserEndpoint = `https://browser-rendering.cdp.792fb5a1c2fb0af960074a1e869db0ed.workers.dev`;
 
-      // Navigate to search URL
+      // First login
+      const loginOk = await this.loginViaEndpoint(browserEndpoint);
+      if (!loginOk) return null;
+
+      // Navigate to URL
       const response = await fetch(`${browserEndpoint}/content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,18 +163,53 @@ export class LinkedInScraper {
     }
   }
 
-  private getAccountId(): string {
-    // This should be injected via env or config
-    return "792fb5a1c2fb0af960074a1e869db0ed";
+  /**
+   * Use Browser Rendering binding (Cloudflare Fetcher) directly.
+   * The binding exposes: newBrowser(), connect(), etc.
+   * We create a new browser, navigate, get HTML, then close.
+   */
+  private async useBrowserBinding(url: string): Promise<{ html: string; cookies: string } | null> {
+    try {
+      // Connect to a new browser session via the binding
+      const browser = await this.browser.connect();
+      const page = await browser.newPage();
+      
+      await page.setViewport({ width: 1280, height: 720 });
+      
+      // First go to login page
+      await page.goto(`${this.baseUrl}/login`, { waitUntil: "networkidle2", timeout: 30000 });
+      
+      // Fill login form
+      await page.waitForSelector("#username", { timeout: 10000 });
+      await page.type("#username", this.email, { delay: 100 });
+      await page.type("#password", this.password, { delay: 100 });
+      await page.click("button[type=submit]");
+      
+      // Wait for navigation after login
+      await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 30000 });
+      
+      // Now navigate to the search URL
+      await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+      
+      // Get the page HTML
+      const html = await page.content();
+      
+      await page.close();
+      await browser.close();
+      
+      return { html, cookies: "" };
+    } catch (e) {
+      console.error(`[LinkedIn] Browser binding error: ${e}`);
+      return null;
+    }
   }
 
   /**
-   * Login to LinkedIn via Browser Rendering
+   * Login to LinkedIn via CDP-style endpoint (fallback when no binding)
    */
-  private async ensureLoggedIn(browserEndpoint: string): Promise<boolean> {
+  private async loginViaEndpoint(browserEndpoint: string): Promise<boolean> {
     try {
-      // Navigate to LinkedIn login
-      const loginResponse = await fetch(`${browserEndpoint}/content`, {
+      const response = await fetch(`${browserEndpoint}/content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,32 +217,44 @@ export class LinkedInScraper {
           waitUntil: "networkidle2",
           timeout: 30000,
           actions: [
-            // Fill email
             { type: "fill", selector: "#username", value: this.email, delay: 100 },
-            // Fill password
             { type: "fill", selector: "#password", value: this.password, delay: 100 },
-            // Click sign in
             { type: "click", selector: "button[type=submit]", delay: 500 },
           ],
         }),
       });
 
-      if (!loginResponse.ok) {
-        console.error(`[LinkedIn] Login failed: ${loginResponse.status}`);
+      if (!response.ok) {
+        console.error(`[LinkedIn] Login failed: ${response.status}`);
         return false;
       }
 
-      console.log("[LinkedIn] Login successful");
+      console.log("[LinkedIn] Login successful via endpoint");
       return true;
     } catch (e) {
-      console.error(`[LinkedIn] Login error: ${e}`);
+      console.error(`[LinkedIn] Login endpoint error: ${e}`);
       return false;
     }
   }
 
+  /**
+   * Get job detail page HTML
+   */
   private async getJobDetail(url: string): Promise<string | null> {
     try {
-      const browserEndpoint = `https://browser-rendering.cdp.${this.getAccountId()}.workers.dev`;
+      if (this.browser) {
+        const browser = await this.browser.connect();
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1280, height: 720 });
+        await page.goto(this.ensureFullUrl(url), { waitUntil: "networkidle2", timeout: 15000 });
+        const html = await page.content();
+        await page.close();
+        await browser.close();
+        return html;
+      }
+
+      // Fallback: endpoint
+      const browserEndpoint = `https://browser-rendering.cdp.792fb5a1c2fb0af960074a1e869db0ed.workers.dev`;
       const response = await fetch(`${browserEndpoint}/content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

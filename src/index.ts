@@ -13,6 +13,7 @@ export type Bindings = {
   LINKEDIN_EMAIL?: string;
   LINKEDIN_PASSWORD?: string;
   ANTHROPIC_API_KEY?: string;
+  BROWSER_RENDERING?: any;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -396,7 +397,7 @@ app.use("/__scheduled", async (c) => {
       return c.json({ ok: false, error: "No credentials" });
     }
 
-    const scraper = new LinkedInScraper(email, password);
+    const scraper = new LinkedInScraper(email, password, c.env.BROWSER_RENDERING);
     const engine = new MatchEngine();
     const db = c.env.DB;
 
@@ -469,9 +470,8 @@ app.post("/api/agent/run", async (c) => {
 
   // === SCRAPE ===
   if (body.action === "scrape" || body.action === "full") {
-    const scraper = new LinkedInScraper(email, password);
+    const scraper = new LinkedInScraper(email, password, c.env.BROWSER_RENDERING);
     const jobs = await scraper.scrapeJobs({
-      keywords: body.keywords || ["Web3", "Solidity", "Blockchain", "Smart Contract", "Full Stack Developer", "React Developer", "Blockchain Developer"],
       location: body.location || "Monterrey, Nuevo León, México",
       maxResults: body.maxResults || 30,
       daysBack: 7,
@@ -571,8 +571,8 @@ app.post("/api/agent/run", async (c) => {
       ok: true,
       action: "apply",
       applied,
-      status: "pending_review", // Las postulaciones quedan marcadas para revisión
-      note: "Postulaciones marcadas en DB. Para aplicar automáticamente en LinkedIn, se necesita Browser Rendering API activo.",
+      status: "pending_review",
+      note: "Postulaciones marcadas en DB. Browser Rendering activo — próximo paso: auto-apply directo en LinkedIn.",
     });
   }
 
