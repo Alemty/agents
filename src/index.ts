@@ -13,7 +13,6 @@ export type Bindings = {
   LINKEDIN_EMAIL?: string;
   LINKEDIN_PASSWORD?: string;
   ANTHROPIC_API_KEY?: string;
-  BROWSER_RENDERING?: any;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -397,7 +396,7 @@ app.use("/__scheduled", async (c) => {
       return c.json({ ok: false, error: "No credentials" });
     }
 
-    const scraper = new LinkedInScraper(email, password, c.env.BROWSER_RENDERING);
+    const scraper = new LinkedInScraper(email, password);
     const engine = new MatchEngine();
     const db = c.env.DB;
 
@@ -470,7 +469,7 @@ app.post("/api/agent/run", async (c) => {
 
   // === SCRAPE ===
   if (body.action === "scrape" || body.action === "full") {
-    const scraper = new LinkedInScraper(email, password, c.env.BROWSER_RENDERING);
+    const scraper = new LinkedInScraper(email, password);
     const jobs = await scraper.scrapeJobs({
       location: body.location || "Monterrey, Nuevo León, México",
       maxResults: body.maxResults || 30,
