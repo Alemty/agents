@@ -407,7 +407,44 @@ app.get("/api/debug/browser-run", async (c) => {
   }
 });
 
-// GET /api/debug/scraper-test — Test scraper with minimal config
+// GET /api/debug/linkedin-search — Test direct LinkedIn search fetch
+app.get("/api/debug/linkedin-search", async (c) => {
+  const keyword = c.req.query("q") || "Supervisor";
+  const location = c.req.query("loc") || "Monterrey";
+
+  const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&f_TPR=r604800&start=0`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html",
+        "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
+      },
+      redirect: "follow",
+    });
+
+    const status = res.status;
+    const body = await res.text();
+
+    // Extract job IDs
+    const jobIds = [...body.matchAll(/data-entity-urn="[^:]+:(\d+)"/g)].map(m => m[1]);
+    const titles = [...body.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/g)].map(m => m[1].replace(/<[^>]*>/g, '').trim());
+
+    return c.json({
+      ok: status === 200,
+      url,
+      status,
+      htmlLength: body.length,
+      jobIdsFound: jobIds.length,
+      jobIds: jobIds.slice(0, 20),
+      titles: titles.slice(0, 20),
+      htmlPreview: body.slice(0, 2000),
+    });
+  } catch (e: any) {
+    return c.json({ ok: false, url, error: e.message });
+  }
+});
 app.get("/api/debug/scraper-test", async (c) => {
   const testUrl = c.req.query("url") || "https://www.linkedin.com/jobs/search/?keywords=Supervisor&location=Monterrey&sortBy=DD";
 

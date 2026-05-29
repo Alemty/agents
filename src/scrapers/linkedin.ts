@@ -1,6 +1,7 @@
 /**
  * LinkedIn Scraper for Cloudflare Workers
- * Uses Browser Run Quick Actions API (HTTP-based, no binding needed)
+ * Uses public LinkedIn job search RSS/XML feeds and direct HTTP fetching
+ * No browser automation required - LinkedIn serves job data in HTML server-side
  */
 
 export interface LinkedInJob {
@@ -24,85 +25,9 @@ export interface ScrapeOptions {
   daysBack?: number;
 }
 
-// Browser Run Quick Actions endpoint (account-level, no binding required)
-const BROWSER_RUN_URL = "https://browser-run.cdp.792fb5a1c2fb0af960074a1e869db0ed.workers.dev/";
-
-/**
- * Execute a Browser Run Quick Action: navigate to URL, return HTML
- */
-async function quickFetch(url: string): Promise<string | null> {
-  try {
-    const payload = JSON.stringify({
-      url,
-      output: "html",
-      wait_until: "networkidle2",
-      timeout: 30000,
-      viewport: { width: 1280, height: 720 },
-    });
-    console.log(`[BrowserRun] POST ${BROWSER_RUN_URL} len=${payload.length}`);
-    const res = await fetch(BROWSER_RUN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-    const body = await res.text();
-    console.log(`[BrowserRun] HTTP ${res.status}: ${body.slice(0, 500)}`);
-    if (!res.ok) {
-      console.error(`[BrowserRun] HTTP ${res.status}: ${body}`);
-      return null;
-    }
-    const data = JSON.parse(body);
-    return data?.html || null;
-  } catch (e) {
-    console.error(`[BrowserRun] Error: ${e}`);
-    return null;
-  }
-}
-
-/**
- * Execute a Browser Run Quick Action: navigate with login steps, return HTML
- */
-async function quickFetchWithLogin(
-  loginUrl: string,
-  targetUrl: string,
-  email: string,
-  password: string
-): Promise<string | null> {
-  try {
-    const res = await fetch(BROWSER_RUN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: loginUrl,
-        output: "html",
-        wait_until: "networkidle2",
-        timeout: 45000,
-        viewport: { width: 1280, height: 720 },
-        actions: [
-          // Fill email
-          { action: "type", selector: "#username", value: email, delay: 100 },
-          // Fill password
-          { action: "type", selector: "#password", value: password, delay: 100 },
-          // Click sign in
-          { action: "click", selector: "button[type=submit]" },
-        ],
-      }),
-    });
-    if (!res.ok) {
-      console.error(`[BrowserRun] Login HTTP ${res.status}: ${await res.text()}`);
-      return null;
-    }
-    const data = await res.json<any>();
-    
-    // Now navigate to target URL in a separate call
-    // (Quick Actions are stateless, so login only worked for that page)
-    // We'll navigate fresh to the target and try to use it
-    return data?.html || null;
-  } catch (e) {
-    console.error(`[BrowserRun] Login error: ${e}`);
-    return null;
-  }
-}
+// LinkedIn public RSS feed endpoint
+// LinkedIn serves job search results as server-rendered HTML (no JS needed for basic data)
+const LINKEDIN_SEARCH_URL = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search";
 
 export class LinkedInScraper {
   private email: string;
@@ -115,7 +40,8 @@ export class LinkedInScraper {
   }
 
   /**
-   * Scrape LinkedIn jobs using Browser Run Quick Actions
+   * Scrape LinkedIn jobs using public search API (no browser required)
+   * LinkedIn's jobs-guest endpoint returns HTML with job cards server-side
    */
   async scrapeJobs(options: ScrapeOptions): Promise<LinkedInJob[]> {
     const { keywords, location = "Monterrey", maxResults = 25 } = options;
@@ -145,35 +71,40 @@ export class LinkedInScraper {
     const encodedKeyword = encodeURIComponent(keyword);
     const encodedLocation = encodeURIComponent(location);
 
-    // LinkedIn search URL sorted by date (last 7 days)
-    const searchUrl = `${this.baseUrl}/jobs/search/?keywords=${encodedKeyword}&location=${encodedLocation}&f_TPR=r604800&sortBy=DD`;
+    // Use LinkedIn's guest job search API (returns HTML, no JS needed)
+    const searchUrl = `${LINKEDIN_SEARCH_URL}?keywords=${encodedKeyword}&location=${encodedLocation}&f_TPR=r604800&start=0`;
 
     try {
-      const html = await quickFetch(searchUrl);
+      const html = await this.fetchPage(searchUrl);
       if (!html) {
         console.log(`[LinkedIn] No HTML for ${keyword}`);
         return jobs;
       }
 
-      // Parse job cards
-      const jobCards = this.parseJobCards(html);
+      // Parse job cards from the guest API HTML
+      const jobCards = this.parseGuestJobCards(html);
 
       for (const card of jobCards.slice(0, maxResults)) {
         try {
-          const detailHtml = await quickFetch(this.ensureFullUrl(card.url));
+          // Fetch job detail page (server-rendered HTML)
+          const detailUrl = `/jobs/view/${card.id}?trk=public_jobs_job-result-card`;
+          const detailHtml = await this.fetchPage(`${this.baseUrl}${detailUrl}`);
           const fullJob = this.parseJobDetail(detailHtml || "", card);
-          if (fullJob) {
-            jobs.push({ ...fullJob, url: this.ensureFullUrl(card.url) });
-          }
+
+          jobs.push({
+            ...fullJob,
+            url: `https://www.linkedin.com/jobs/view/${card.id}/`,
+          });
         } catch (e) {
           console.log(`[LinkedIn] Detail error for ${card.title}: ${e}`);
+          // Fallback: add card-level data
           jobs.push({
             platform: "linkedin",
             title: card.title,
             company: card.company,
             location: card.location,
             description: card.description || "",
-            url: this.ensureFullUrl(card.url),
+            url: `https://www.linkedin.com/jobs/view/${card.id}/`,
             modality: card.modality || "",
             salary: card.salary || null,
             skills: [],
@@ -189,68 +120,121 @@ export class LinkedInScraper {
   }
 
   /**
-   * Parse job cards from LinkedIn search results HTML
+   * Fetch a page via HTTP GET (server-side rendered HTML)
    */
-  private parseJobCards(html: string): any[] {
+  private async fetchPage(url: string): Promise<string | null> {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
+          "Cache-Control": "no-cache",
+        },
+        redirect: "follow",
+      });
+
+      if (!res.ok) {
+        console.error(`[LinkedIn] HTTP ${res.status} for ${url}`);
+        return null;
+      }
+
+      return await res.text();
+    } catch (e) {
+      console.error(`[LinkedIn] Fetch error for ${url}: ${e}`);
+      return null;
+    }
+  }
+
+  /**
+   * Parse job cards from LinkedIn's guest job search API HTML
+   * The /jobs-guest/jobs/api/seeMoreJobPostings/search endpoint returns structured HTML
+   */
+  private parseGuestJobCards(html: string): any[] {
     const cards: any[] = [];
     
-    // Try multiple selector patterns for LinkedIn job cards
-    const patterns = [
-      // Pattern 1: base-card (new LinkedIn)
-      /<a[^>]*class="[^"]*base-card__full-link[^"]*"[^>]*href="([^"]+)"[^>]*>[\s\S]*?<\/a>/gi,
-      // Pattern 2: job-card-container
-      /<div[^>]*class="[^"]*job-card-container[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi,
-      // Pattern 3: job-search-card
-      /<div[^>]*class="[^"]*job-search-card[^"]*"[^>]*>[\s\S]*?<\/div>\s*<\/div>/gi,
-      // Pattern 4: Any anchor with job id
-      /<a[^>]*href="([^"]*\/jobs\/view\/\d+[^"]*)"[^>]*>[\s\S]*?<\/a>/gi,
-    ];
+    // Split by job-card-container
+    const cardRegex = /<div[^>]*class="[^"]*job-card-container[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/gi;
+    let match;
 
-    for (const pattern of patterns) {
-      pattern.lastIndex = 0;
-      const matches = html.matchAll(pattern);
-      for (const match of matches) {
-        const cardHtml = match[0] || match[1] || "";
-        const href = match[1] || "";
+    while ((match = cardRegex.exec(html)) !== null) {
+      const cardHtml = match[1];
+
+      // Extract job ID from data-entity-urn or similar
+      const idMatch = cardHtml.match(/data-entity-urn="[^:]+:(\d+)"/)
+        || cardHtml.match(/data-job-id="(\d+)"/)
+        || cardHtml.match(/jobPostingId:(\d+)/);
+      const id = idMatch ? idMatch[1] : "";
+
+      // Extract title
+      const titleMatch = cardHtml.match(/<span[^>]*class="[^"]*screen-reader-text[^"]*"[^>]*>([\s\S]*?)<\/span>/i)
+        || cardHtml.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i)
+        || cardHtml.match(/aria-label="([^"]+)"/i);
+      const title = titleMatch ? this.cleanText(titleMatch[1]) : "";
+
+      // Extract company
+      const companyMatch = cardHtml.match(/class="[^"]*job-card-container__company-name[^"]*"[^>]*>([\s\S]*?)</i)
+        || cardHtml.match(/<a[^>]*class="[^"]*job-card-container__company-name[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+      const company = companyMatch ? this.cleanText(companyMatch[1]) : "";
+
+      // Extract location
+      const locationMatch = cardHtml.match(/class="[^"]*job-card-container__metadata-item[^"]*"[^>]*>([\s\S]*?)<\/li>/i)
+        || cardHtml.match(/<li[^>]*class="[^"]*job-card-container__metadata-item[^"]*"[^>]*>([\s\S]*?)<\/li>/i);
+      const location = locationMatch ? this.cleanText(locationMatch[1]) : "";
+
+      // Extract posted time
+      const timeMatch = cardHtml.match(/class="[^"]*job-card-container__listed-state[^"]*"[^>]*>([\s\S]*?)<span/i)
+        || cardHtml.match(/(\d+)\s+(minute|hour|day|week|month|día|hora|semana|mes)\s+/i);
+      const postedAt = timeMatch ? this.cleanText(timeMatch[1]) : new Date().toISOString();
+
+      // Extract salary if present
+      const salaryMatch = cardHtml.match(/\$[\d,]+[\s-]*\$?[\d,]*/g);
+      const salary = salaryMatch ? salaryMatch[0] : null;
+
+      // Extract modality
+      const modalityMatch = cardHtml.match(/(Presencial|Remoto|Híbrido|Hybrid|Remote|On-site|Hibrido)/i);
+      const modality = modalityMatch ? modalityMatch[1] : "";
+
+      if (id && title) {
+        cards.push({
+          id,
+          title,
+          company,
+          location,
+          salary,
+          modality,
+          description: "",
+          postedAt,
+        });
+      }
+    }
+
+    // Fallback: try parsing with simpler regex if no cards found
+    if (cards.length === 0) {
+      const simpleRegex = /data-entity-urn="[^:]+:(\d+)"/g;
+      let idMatch;
+      while ((idMatch = simpleRegex.exec(html)) !== null) {
+        const jobId = idMatch[1];
+        // Find surrounding context for this job
+        const startPos = Math.max(0, idMatch.index - 500);
+        const contextHtml = html.slice(startPos, idMatch.index + 500);
         
-        // Extract title
-        const titleMatch = cardHtml.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i) 
-          || cardHtml.match(/aria-label="([^"]+)"/
-          || cardHtml.match(/<span[^>]*class="[^"]*screen-reader-text[^"]*"[^>]*>([\s\S]*?)<\/span>/i));
-        const title = titleMatch ? this.cleanText(titleMatch[1]) : "";
-
-        // Extract company
-        const companyMatch = cardHtml.match(/<h4[^>]*>([\s\S]*?)<\/h4>/i)
-          || cardHtml.match(/class="[^"]*artdeco-entity-lockup__subtitle[^"]*"[^>]*>([\s\S]*?)</i);
-        const company = companyMatch ? this.cleanText(companyMatch[1]) : "";
-
-        // Extract location
-        const locationMatch = cardHtml.match(/class="[^"]*job-card-container__metadata-wrapper[^"]*"[^>]*>([\s\S]*?)</i)
-          || cardHtml.match(/<li[^>]*class="[^"]*job-card-container__metadata-item[^"]*"[^>]*>([\s\S]*?)<\/li>/i);
-        const location = locationMatch ? this.cleanText(locationMatch[1]) : "";
-
-        // Extract salary if present
-        const salaryMatch = cardHtml.match(/\$[\d,]+[\s-]*\$?[\d,]*/g);
-        const salary = salaryMatch ? salaryMatch[0] : null;
-
-        // Extract modality
-        const modalityMatch = cardHtml.match(/(Presencial|Remoto|Híbrido|Hybrid|Remote|On-site|Hibrido)/i);
-        const modality = modalityMatch ? modalityMatch[1] : "";
-
-        if (title && href) {
+        const titleM = contextHtml.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i);
+        const companyM = contextHtml.match(/<a[^>]*class="[^"]*company-name[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+        
+        if (titleM) {
           cards.push({
-            title,
-            company,
-            location,
-            url: href.startsWith("http") ? href : `https://www.linkedin.com${href}`,
-            salary,
-            modality,
+            id: jobId,
+            title: this.cleanText(titleM[1]),
+            company: companyM ? this.cleanText(companyM[1]) : "",
+            location: "",
+            salary: null,
+            modality: "",
             description: "",
             postedAt: new Date().toISOString(),
           });
         }
       }
-      if (cards.length > 0) break; // Stop at first pattern that matches
     }
 
     return cards;
@@ -264,7 +248,7 @@ export class LinkedInScraper {
     const descMatch = html.match(/class="[^"]*description__text[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
       || html.match(/class="[^"]*show-more-less-html[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
       || html.match(/id="job-details"[^>]*>([\s\S]*?)<\/div>/i);
-    const description = descMatch ? this.cleanText(descMatch[1]) : "";
+    const description = descMatch ? this.cleanText(descMatch[1]) : card.description || "";
 
     // Extract skills from description
     const skills = this.extractSkills(description);
@@ -273,16 +257,11 @@ export class LinkedInScraper {
     const modalityMatch = html.match(/(Presencial|Remoto|Híbrido|Hybrid|Remote|On-site|Hibrido)/i);
     const modality = modalityMatch ? modalityMatch[1] : card.modality || "";
 
-    // Extract posted date
-    const dateMatch = html.match(/(\d+)\s+(minute|hour|day|week|month|día|hora|semana|mes)\s+/i);
-    const postedAt = dateMatch ? dateMatch[0] : card.postedAt;
-
     return {
       ...card,
       description,
       skills,
       modality,
-      postedAt,
     };
   }
 
@@ -291,23 +270,17 @@ export class LinkedInScraper {
    */
   private extractSkills(description: string): string[] {
     const skillKeywords = [
-      // Blockchain / Web3
       "Solidity", "Ethereum", "Web3", "Blockchain", "Smart Contract", "DAOs", "DeFi",
       "NFT", "IPFS", "ENS", "Hardhat", "Foundry", "Wagmi", "Viem", "Ethers.js",
       "OpenZeppelin", "The Graph", "Chainlink",
-      // Frontend
       "React", "Next.js", "JavaScript", "TypeScript", "HTML", "CSS", "Tailwind",
       "Vue", "Angular", "Redux", "GraphQL", "REST API",
-      // Backend
       "Node.js", "Python", "SQL", "PostgreSQL", "MongoDB", "Redis", "Docker",
       "AWS", "Cloudflare", "Serverless", "Microservices",
-      // AI / Data
       "Machine Learning", "AI", "Artificial Intelligence", "Data Analysis", "Power BI",
       "Excel", "Tableau", "Prompt Engineering", "LLMs", "Copilot",
-      // Soft skills
       "Leadership", "Team Management", "Training", "Coaching", "Sales",
       "Communication", "CRM", "Inventory Management", "KPI Analysis",
-      // Languages
       "English", "Spanish",
     ];
 
@@ -334,16 +307,8 @@ export class LinkedInScraper {
       .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
+      .replace(/&#x27;/g, "'")
       .replace(/\s+/g, " ")
       .trim();
-  }
-
-  /**
-   * Ensure URL is absolute
-   */
-  private ensureFullUrl(url: string): string {
-    if (url.startsWith("http")) return url;
-    if (url.startsWith("/")) return `${this.baseUrl}${url}`;
-    return `${this.baseUrl}/${url}`;
   }
 }
