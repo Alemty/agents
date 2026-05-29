@@ -11,7 +11,7 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "jobs-db"
-database_id = ""
+database_id = "849ffb99-99bd-427d-95d1-c84166738ac7"
 
 # Environment variables
 [vars]
