@@ -9,6 +9,8 @@
     "deploy:staging": "wrangler deploy --env staging",
     "cf-typegen": "wrangler types",
     "seed": "node scripts/seed.js",
+    "ipfs": "echo 'Sube ipfs/ a IPFS (Pinata, web3.storage, o ipfs-cli)'",
+    "deploy:ipfs": "wrangler deploy ipfs/index.html --name job-agent-ipfs",
     "test": "echo ok"
   },
   "dependencies": {
