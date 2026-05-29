@@ -3,366 +3,243 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Job Agent — Alemty</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Job Agent — Alejandro Gtz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    :root { --bg: #0a0a0f; --card: #14141f; --border: #2a2a3a; --accent: #6366f1; }
-    body { background: var(--bg); color: #e0e0e0; font-family: 'Inter', sans-serif; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
-    .badge { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
-    .high { background: #065f4620; color: #34d399; border: 1px solid #065f46; }
-    .mid { background: #713f1220; color: #fbbf24; border: 1px solid #713f12; }
-    .low { background: #7f1d1d20; color: #f87171; border: 1px solid #7f1d1d; }
-    .glow { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
-    .modal-overlay { background: rgba(0,0,0,0.7); }
-    .spinner { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    :root {
+      --bg: #0b0b12;
+      --surface: rgba(28, 28, 44, 0.75);
+      --surface-hover: rgba(28, 28, 44, 0.95);
+      --border: rgba(99, 102, 241, 0.15);
+      --border-light: rgba(255, 255, 255, 0.06);
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --accent2: #a855f7;
+      --text: #e8e8ed;
+      --text-dim: #8888a0;
+      --green: #34d399;
+      --green-bg: rgba(52, 211, 153, 0.12);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --red: #f87171;
+      --red-bg: rgba(248, 113, 113, 0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; top: -40%; left: -20%;
+      width: 80%; height: 80%;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: ''; position: fixed; bottom: -30%; right: -10%;
+      width: 60%; height: 60%;
+      background: radial-gradient(ellipse, rgba(168,85,247,0.05) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    .container { max-width: 1040px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .glow { box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.04); }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 20px 28px; margin-bottom: 20px; }
+    .header-left h1 {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-left p { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(52,211,153,0.5); margin-right: 6px; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px; border-radius: 12px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      border: 1px solid var(--border-light); cursor: pointer;
+      background: var(--surface); color: var(--text);
+      transition: all 0.2s ease;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .btn:hover { background: var(--surface-hover); border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-1px); }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #7c3aed); border-color: transparent; color: white; }
+    .btn-primary:hover { box-shadow: 0 0 24px var(--accent-glow); border-color: transparent; }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); border-color: transparent; color: white; }
+    .btn-success:hover { box-shadow: 0 0 24px rgba(52,211,153,0.3); }
+    .btn:disabled { opacity: 0.4; pointer-events: none; }
+    .btn-sm { padding: 5px 12px; font-size: 11px; border-radius: 8px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { padding: 18px 20px; text-align: center; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .stat-card .stat-label { font-size: 11px; color: var(--text-dim); font-weight: 500; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .stat-icon { font-size: 20px; margin-bottom: 4px; }
+    .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .action-card { padding: 18px 20px; cursor: pointer; transition: all 0.25s ease; text-align: center; }
+    .action-card:hover { border-color: var(--accent); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-2px); }
+    .action-card .action-icon { font-size: 28px; margin-bottom: 6px; }
+    .action-card .action-title { font-weight: 700; font-size: 14px; }
+    .action-card .action-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .progress-card { padding: 18px 22px; margin-bottom: 20px; }
+    .progress-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(99,102,241,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s ease; box-shadow: 0 0 12px var(--accent-glow); }
+    .progress-logs { margin-top: 8px; font-size: 11px; color: var(--text-dim); max-height: 80px; overflow-y: auto; line-height: 1.6; }
+    .progress-logs .log-success { color: var(--green); }
+    .progress-logs .log-error { color: var(--red); }
+    .filter-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; margin-bottom: 12px; }
+    .filter-bar h2 { font-size: 16px; font-weight: 700; }
+    .filter-controls { display: flex; gap: 8px; align-items: center; }
+    .filter-select { background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-family: inherit; color: var(--text); cursor: pointer; }
+    .filter-select option { background: #1a1a2e; }
+    .job-count { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+    .jobs-list { display: flex; flex-direction: column; gap: 6px; }
+    .job-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.02); border: 1px solid transparent; transition: all 0.2s ease; gap: 12px; }
+    .job-item:hover { background: rgba(99,102,241,0.04); border-color: var(--border); }
+    .job-info { flex: 1; min-width: 0; }
+    .job-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .job-meta { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+    .job-skills { font-size: 10px; color: var(--accent); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .job-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .score-badge { padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .score-high { background: var(--green-bg); color: var(--green); }
+    .score-mid { background: var(--amber-bg); color: var(--amber); }
+    .score-low { background: var(--red-bg); color: var(--red); }
+    .action-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: transparent; color: var(--text-dim); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; text-decoration: none; }
+    .action-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+    .action-btn.cv { color: var(--green); }
+    .action-btn.cv:hover { border-color: var(--green); box-shadow: 0 0 12px rgba(52,211,153,0.2); }
+    .action-btn.apply { color: var(--amber); }
+    .action-btn.apply:hover { border-color: var(--amber); box-shadow: 0 0 12px rgba(251,191,36,0.2); }
+    .applied-badge { padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; background: var(--green-bg); color: var(--green); white-space: nowrap; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; }
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-hidden { display: none !important; }
+    .modal-content { max-width: 820px; width: 100%; max-height: 90vh; overflow: hidden; border-radius: var(--radius); box-shadow: 0 0 60px rgba(99,102,241,0.15); }
+    .modal-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: linear-gradient(135deg, #1e1b4b, #0b0b12); border-bottom: 1px solid var(--border-light); border-radius: var(--radius) var(--radius) 0 0; }
+    .modal-bar .modal-title { font-size: 14px; font-weight: 600; }
+    .modal-bar .close-btn { background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; padding: 0 4px; transition: color 0.2s; }
+    .modal-bar .close-btn:hover { color: var(--text); }
+    .modal-loading { display: flex; align-items: center; justify-content: center; height: 300px; color: var(--text-dim); flex-direction: column; gap: 12px; }
+    #cvFrame { width: 100%; height: calc(90vh - 60px); border: none; background: white; border-radius: 0 0 var(--radius) var(--radius); }
+    .manual-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border-light); border-radius: 10px; padding: 10px 14px; font-size: 13px; font-family: inherit; color: var(--text); margin-bottom: 12px; }
+    .manual-input::placeholder { color: var(--text-dim); }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 0; }
+    .summary-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.02); }
+    .summary-item .si-icon { font-size: 18px; }
+    .summary-item .si-label { font-size: 11px; color: var(--text-dim); }
+    .summary-item .si-value { font-size: 13px; font-weight: 600; }
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .action-grid { grid-template-columns: 1fr; } .filter-bar { flex-direction: column; gap: 8px; align-items: flex-start; } .header { flex-direction: column; gap: 12px; text-align: center; } }
   </style>
 </head>
-<body class="p-4 md:p-8">
-  <div class="max-w-6xl mx-auto">
+<body>
+  <div class="container">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-white">🤖 Job Agent</h1>
-        <p class="text-gray-400 text-sm">Alejandro Gutierrez Zavala · <span id="status" class="text-emerald-400">online</span></p>
+    <div class="header glass">
+      <div class="header-left">
+        <h1>🤖 Job Agent</h1>
+        <p><span class="status-dot"></span>Alejandro Gutierrez Zavala</p>
       </div>
-      <div class="flex gap-2">
-        <button onclick="refreshAll()" class="px-4 py-2 bg-gray-700 rounded-lg text-sm hover:bg-gray-600 transition">🔄 Refrescar</button>
-      </div>
-    </div>
-
-    <!-- Stats Grid -->
-    <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="card p-4 glow"><div class="text-gray-400 text-xs">Vacantes</div><div id="totalJobs" class="text-2xl font-bold text-white">-</div></div>
-      <div class="card p-4"><div class="text-gray-400 text-xs">Postulaciones</div><div id="totalApps" class="text-2xl font-bold text-white">-</div></div>
-      <div class="card p-4"><div class="text-gray-400 text-xs">Match Promedio</div><div id="avgMatch" class="text-2xl font-bold text-white">-</div></div>
-      <div class="card p-4"><div class="text-gray-400 text-xs">Hoy</div><div id="todayApps" class="text-2xl font-bold text-white">-</div></div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <button onclick="runScrape()" id="btnScrape" class="card p-4 hover:border-indigo-500 transition text-left">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">🔍</span>
-          <div>
-            <div class="font-semibold text-white">Buscar Vacantes</div>
-            <div class="text-xs text-gray-400">Scrapea LinkedIn con tus keywords</div>
-          </div>
-        </div>
-      </button>
-
-      <button onclick="runPipeline()" id="btnPipeline" class="card p-4 hover:border-emerald-500 transition text-left">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">⚡</span>
-          <div>
-            <div class="font-semibold text-white">Pipeline Completo</div>
-            <div class="text-xs text-gray-400">Scrape + Match + CV + Postulación</div>
-          </div>
-        </div>
-      </button>
-
-      <button onclick="showManualAdd()" class="card p-4 hover:border-amber-500 transition text-left">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">📝</span>
-          <div>
-            <div class="font-semibold text-white">Agregar Vacante</div>
-            <div class="text-xs text-gray-400">Pega una URL de LinkedIn</div>
-          </div>
-        </div>
-      </button>
-    </div>
-
-    <!-- Progress / Logs -->
-    <div id="progressBar" class="hidden card p-4 mb-6">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="spinner w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full"></div>
-        <span id="progressText" class="text-sm text-gray-300">Procesando...</span>
-      </div>
-      <div class="w-full bg-gray-800 rounded-full h-2">
-        <div id="progressFill" class="bg-indigo-500 h-2 rounded-full transition-all" style="width: 0%"></div>
-      </div>
-      <div id="logOutput" class="mt-2 text-xs text-gray-500 max-h-24 overflow-y-auto"></div>
-    </div>
-
-    <!-- CV Modal -->
-    <div id="cvModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-      <div class="card max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-        <button onclick="closeCV()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
-        <div id="cvContent"></div>
+      <div class="header-actions">
+        <button class="btn" onclick="refreshAll()">🔄 Refrescar</button>
       </div>
     </div>
-
-    <!-- Manual Add Modal -->
-    <div id="manualModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-      <div class="card max-w-lg w-full p-6 relative">
-        <button onclick="closeManual()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">&times;</button>
-        <h3 class="text-lg font-semibold text-white mb-4">📝 Agregar Vacante Manual</h3>
-        <input id="manualUrl" placeholder="URL de LinkedIn (ej: https://www.linkedin.com/jobs/view/...)" class="w-full bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-4 py-2 text-white text-sm mb-3" />
-        <button onclick="addManualJob()" class="px-6 py-2 bg-amber-600 rounded-lg text-sm hover:bg-amber-500 transition">Agregar</button>
-      </div>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card glass glow"><div class="stat-icon">💼</div><div class="stat-value" id="totalJobs">—</div><div class="stat-label">Vacantes</div></div>
+      <div class="stat-card glass"><div class="stat-icon">✅</div><div class="stat-value" id="totalApps">—</div><div class="stat-label">Postulaciones</div></div>
+      <div class="stat-card glass"><div class="stat-icon">🎯</div><div class="stat-value" id="avgMatch">—</div><div class="stat-label">Match Prom.</div></div>
+      <div class="stat-card glass"><div class="stat-icon">📅</div><div class="stat-value" id="todayApps">—</div><div class="stat-label">Hoy</div></div>
     </div>
-
-    <!-- Jobs Table -->
-    <div class="card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white">📋 Vacantes</h2>
-        <div class="flex gap-2 items-center">
-          <select id="platformFilter" onchange="loadJobs()" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-3 py-1 text-sm text-white">
-            <option value="">Todas</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="manual">Manual</option>
-          </select>
-          <select id="statusFilter" onchange="loadJobs()" class="bg-[#1a1a2e] border border-[#2a2a3a] rounded-lg px-3 py-1 text-sm text-white">
-            <option value="">Todos</option>
-            <option value="applied">Postulados</option>
-            <option value="pending">Pendientes</option>
-          </select>
-          <span id="jobsCount" class="text-xs text-gray-500"></span>
+    <!-- Actions -->
+    <div class="action-grid">
+      <div class="action-card glass" onclick="runScrape()" id="btnScrape"><div class="action-icon">🔍</div><div class="action-title">Buscar Vacantes</div><div class="action-desc">Scrapea LinkedIn con tus keywords</div></div>
+      <div class="action-card glass" onclick="runPipeline()" id="btnPipeline"><div class="action-icon">⚡</div><div class="action-title">Pipeline Completo</div><div class="action-desc">Scrape + Match + CV + Postular (top 5)</div></div>
+      <div class="action-card glass" onclick="showManualModal()"><div class="action-icon">📝</div><div class="action-title">Agregar Vacante</div><div class="action-desc">Pega URL de LinkedIn manual</div></div>
+    </div>
+    <!-- Progress -->
+    <div id="progressCard" class="progress-card glass modal-hidden">
+      <div class="progress-header"><div class="spinner"></div><span id="progressText" style="font-size:13px;font-weight:600;">Procesando...</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-logs" id="logOutput"></div>
+    </div>
+    <!-- Summary -->
+    <div id="summaryCard" class="glass modal-hidden" style="padding:18px 22px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="font-size:15px;font-weight:700;">📊 Resumen de Postulaciones</h3>
+        <button class="btn btn-sm" onclick="document.getElementById('summaryCard').classList.add('modal-hidden')">✕</button>
+      </div>
+      <div class="summary-grid" id="summaryContent"></div>
+    </div>
+    <!-- Jobs -->
+    <div class="glass" style="overflow:hidden;">
+      <div class="filter-bar">
+        <h2>📋 Vacantes</h2>
+        <div class="filter-controls">
+          <span class="job-count" id="jobsCount"></span>
+          <select class="filter-select" id="platformFilter" onchange="loadJobs()"><option value="">Todas</option><option value="linkedin">LinkedIn</option><option value="manual">Manual</option></select>
+          <select class="filter-select" id="statusFilter" onchange="loadJobs()"><option value="">Todas</option><option value="pending">Pendientes</option><option value="applied">Postuladas</option></select>
         </div>
       </div>
-      <div id="jobsList" class="space-y-2 text-sm">
-        <p class="text-gray-500">No hay datos. Usa los botones de arriba para buscar vacantes.</p>
+      <div class="jobs-list" id="jobsList" style="padding:0 4px 12px 4px;"><div class="empty-state"><div class="empty-icon">🔮</div><p>Usa los botones para buscar vacantes</p></div></div>
+    </div>
+  </div>
+  <!-- CV Modal -->
+  <div id="cvModal" class="modal-overlay modal-hidden">
+    <div class="modal-content glass">
+      <div class="modal-bar"><span class="modal-title" id="cvModalTitle">📄 CV — Vacante</span><button class="close-btn" onclick="closeCVModal()">&times;</button></div>
+      <div id="cvFrameContainer" style="background:white;"><div class="modal-loading"><div class="spinner"></div><span>Generando CV...</span></div></div>
+    </div>
+  </div>
+  <!-- Manual Modal -->
+  <div id="manualModal" class="modal-overlay modal-hidden">
+    <div class="modal-content glass" style="max-width:480px;">
+      <div class="modal-bar"><span class="modal-title">📝 Agregar Vacante</span><button class="close-btn" onclick="closeManualModal()">&times;</button></div>
+      <div style="padding:20px;">
+        <input class="manual-input" id="manualUrl" placeholder="URL de LinkedIn (https://www.linkedin.com/jobs/view/...)" />
+        <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="addManualJob()" style="flex:1;justify-content:center;">Agregar</button><button class="btn" onclick="closeManualModal()">Cancelar</button></div>
       </div>
     </div>
   </div>
-
   <script>
-    const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : '';
-
-    let scraping = false;
-
-    // --- API helper ---
-    async function api(path, opts = {}) {
-      const res = await fetch(API + path, {
-        headers: { 'Content-Type': 'application/json', ...opts.headers },
-        ...opts,
-      });
-      return res.json();
-    }
-
-    // --- Modals ---
-    function showManualAdd() { document.getElementById('manualModal').classList.remove('hidden'); }
-    function closeManual() { document.getElementById('manualModal').classList.add('hidden'); }
-    function closeCV() { document.getElementById('cvModal').classList.add('hidden'); }
-
-    // --- Progress ---
-    function showProgress(text, pct) {
-      const bar = document.getElementById('progressBar');
-      bar.classList.remove('hidden');
-      document.getElementById('progressText').textContent = text;
-      document.getElementById('progressFill').style.width = pct + '%';
-    }
-    function log(msg) {
-      const el = document.getElementById('logOutput');
-      el.innerHTML += '<div>' + msg + '</div>';
-      el.scrollTop = el.scrollHeight;
-    }
-    function hideProgress() {
-      document.getElementById('progressBar').classList.add('hidden');
-      document.getElementById('logOutput').innerHTML = '';
-    }
-
-    // --- Load Data ---
-    async function loadStats() {
-      const data = await api('/stats');
-      if (!data.ok) return;
-      const s = data.stats;
-      document.getElementById('totalJobs').textContent = s.totalJobs;
-      document.getElementById('totalApps').textContent = s.appliedJobs;
-      document.getElementById('avgMatch').textContent = s.averageMatchScore + '%';
-      document.getElementById('todayApps').textContent = s.todayApplications + '/' + s.maxDailyApplications;
-    }
-
-    async function loadJobs() {
-      const platform = document.getElementById('platformFilter').value;
-      const status = document.getElementById('statusFilter').value;
-      const params = new URLSearchParams({ limit: '50' });
-      if (platform) params.set('platform', platform);
-
-      const data = await api('/jobs?' + params.toString());
-      const list = document.getElementById('jobsList');
-      document.getElementById('jobsCount').textContent = data.jobs?.length || 0;
-
-      if (!data.ok || !data.jobs || !data.jobs.length) {
-        list.innerHTML = '<p class="text-gray-500">No hay vacantes.</p>';
-        return;
-      }
-
-      // Filter by status client-side
-      let jobs = data.jobs;
-      if (status === 'applied') jobs = jobs.filter(j => j.applied);
-      if (status === 'pending') jobs = jobs.filter(j => !j.applied);
-
-      if (!jobs.length) {
-        list.innerHTML = '<p class="text-gray-500">No hay vacantes con ese filtro.</p>';
-        return;
-      }
-
-      list.innerHTML = jobs.map(j => {
-        const badge = j.match_score >= 60 ? 'high' : j.match_score >= 30 ? 'mid' : 'low';
-        const icon = j.match_score >= 60 ? '✅' : j.match_score >= 30 ? '⚠️' : '❌';
-        const skills = j.matched_skills_json ? JSON.parse(j.matched_skills_json) : [];
-        return `<div class="card px-4 py-3 flex items-center justify-between hover:border-gray-600 transition">
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-white truncate">${icon} ${j.title}</div>
-            <div class="text-gray-400 text-xs truncate">${j.company || '?'} · ${j.location || '?'}</div>
-            ${skills.length ? `<div class="text-gray-500 text-xs mt-1 truncate">${skills.slice(0,5).join(', ')}</div>` : ''}
-          </div>
-          <div class="flex items-center gap-2 shrink-0 ml-3">
-            <span class="badge ${badge}">${j.match_score}%</span>
-            ${j.url ? `<a href="${j.url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 text-xs" title="Ver en LinkedIn">🔗</a>` : ''}
-            <button onclick="viewCV('${j.id}')" class="text-emerald-400 hover:text-emerald-300 text-xs" title="Ver CV">📄</button>
-            ${j.applied ? '<span class="badge high">✅ Aplicado</span>' : `<button onclick="markApplied('${j.id}')" class="text-xs text-amber-400 hover:text-amber-300">Postular</button>`}
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // --- Actions ---
-
-    async function runScrape() {
-      if (scraping) return;
-      scraping = true;
-      document.getElementById('btnScrape').classList.add('opacity-50', 'pointer-events-none');
-      showProgress('Buscando vacantes en LinkedIn...', 10);
-
-      log('🔍 Iniciando scrape...');
-      try {
-        const data = await api('/api/scrape', {
-          method: 'POST',
-          body: JSON.stringify({
-            keywords: [
-              "Supervisor de Ventas", "Coordinador", "Vendedor",
-              "Ejecutivo de Ventas", "Asesor de Ventas", "Merchandiser",
-              "Capacitador", "Sales Trainer", "Retail Supervisor",
-              "Jefe de Sector", "Coordinador Retail", "Servicio al Cliente",
-              "Call Center", "Analista de Datos", "Soporte Técnico"
-            ],
-            location: "Monterrey, Nuevo León, México",
-            maxResults: 50
-          })
-        });
-
-        if (data.ok) {
-          showProgress(`✅ ${data.scrape.total} vacantes encontradas, ${data.scrape.stored} nuevas almacenadas`, 100);
-          log(`✅ Total: ${data.scrape.total} · Matched: ${data.scrape.matched} · Nuevas: ${data.scrape.stored}`);
-          data.jobs.forEach(j => log(`  • ${j.title} — ${j.company}`));
-        } else {
-          showProgress(`❌ Error: ${data.error}`, 100);
-          log(`❌ ${data.error}`);
-        }
-      } catch (e) {
-        showProgress(`❌ Error de conexión: ${e.message}`, 100);
-        log(`❌ ${e.message}`);
-      }
-
-      setTimeout(() => { hideProgress(); loadJobs(); loadStats(); }, 2000);
-      scraping = false;
-      document.getElementById('btnScrape').classList.remove('opacity-50', 'pointer-events-none');
-    }
-
-    async function runPipeline() {
-      if (scraping) return;
-      scraping = true;
-      document.getElementById('btnPipeline').classList.add('opacity-50', 'pointer-events-none');
-      showProgress('🚀 Ejecutando pipeline completo...', 5);
-
-      log('🔍 Fase 1: Scraping LinkedIn...');
-      try {
-        const scrapeData = await api('/api/scrape', {
-          method: 'POST',
-          body: JSON.stringify({
-            keywords: [
-              "Supervisor de Ventas", "Coordinador", "Vendedor",
-              "Ejecutivo de Ventas", "Asesor de Ventas", "Merchandiser",
-              "Capacitador", "Sales Trainer", "Retail Supervisor",
-              "Jefe de Sector", "Coordinador Retail", "Servicio al Cliente",
-              "Call Center", "Analista de Datos", "Soporte Técnico"
-            ],
-            location: "Monterrey, Nuevo León, México",
-            maxResults: 50
-          })
-        });
-        log(`✅ ${scrapeData.scrape?.total || 0} vacantes encontradas`);
-        showProgress('📄 Fase 2: Generando CVs...', 40);
-
-        const cvData = await api('/api/agent/run', {
-          method: 'POST',
-          body: JSON.stringify({ action: 'cv', maxResults: 50 })
-        });
-        log(`✅ ${cvData.generated || 0} CVs generados`);
-        showProgress('📋 Fase 3: Marcando postulaciones...', 70);
-
-        const applyData = await api('/api/agent/run', {
-          method: 'POST',
-          body: JSON.stringify({ action: 'apply', maxApply: 10 })
-        });
-        log(`✅ ${applyData.applied || 0} postulaciones marcadas`);
-        showProgress('✅ Pipeline completo', 100);
-        log('🎯 Listo! Revisa las vacantes abajo.');
-      } catch (e) {
-        showProgress(`❌ Error: ${e.message}`, 100);
-        log(`❌ ${e.message}`);
-      }
-
-      setTimeout(() => { hideProgress(); loadJobs(); loadStats(); }, 2000);
-      scraping = false;
-      document.getElementById('btnPipeline').classList.remove('opacity-50', 'pointer-events-none');
-    }
-
-    async function viewCV(jobId) {
-      document.getElementById('cvContent').innerHTML = '<div class="text-gray-400">Cargando CV...</div>';
-      document.getElementById('cvModal').classList.remove('hidden');
-      try {
-        const data = await api('/api/agent/cv/' + jobId);
-        if (data.ok && data.cvHtml) {
-          document.getElementById('cvContent').innerHTML = data.cvHtml;
-        } else {
-          document.getElementById('cvContent').innerHTML = '<div class="text-red-400">❌ No se pudo generar el CV para esta vacante.</div>';
-        }
-      } catch (e) {
-        document.getElementById('cvContent').innerHTML = `<div class="text-red-400">❌ Error: ${e.message}</div>`;
-      }
-    }
-
-    async function markApplied(jobId) {
-      try {
-        const data = await api('/api/agent/run', {
-          method: 'POST',
-          body: JSON.stringify({ action: 'apply', jobId })
-        });
-        loadJobs();
-      } catch (e) {
-        alert('Error: ' + e.message);
-      }
-    }
-
-    async function addManualJob() {
-      const url = document.getElementById('manualUrl').value;
-      if (!url) return;
-
-      try {
-        const data = await api('/jobs', {
-          method: 'POST',
-          body: JSON.stringify({ url, platform: 'manual' })
-        });
-        if (data.ok) {
-          closeManual();
-          loadJobs();
-          loadStats();
-        } else {
-          alert('Error: ' + (data.error || 'no se pudo agregar'));
-        }
-      } catch (e) {
-        alert('Error: ' + e.message);
-      }
-    }
-
-    // --- Init ---
-    function refreshAll() { loadStats(); loadJobs(); }
+    const API = window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1'?'http://localhost:3000':'';
+    const KW=["Supervisor de Ventas","Coordinador","Vendedor","Ejecutivo de Ventas","Asesor de Ventas","Merchandiser","Capacitador","Sales Trainer","Retail Supervisor","Jefe de Sector","Coordinador Retail","Servicio al Cliente","Call Center","Analista de Datos","Soporte Técnico","Desarrollador Web","Frontend"];
+    let running=false,cvC={};
+    async function api(p,o){return fetch(API+p,{headers:{'Content-Type':'application/json',...o.headers},...o}).then(r=>r.json());}
+    function m(e){e.classList.toggle('modal-hidden');}
+    function showManualModal(){m(document.getElementById('manualModal'));}
+    function closeManualModal(){m(document.getElementById('manualModal'));}
+    function closeCVModal(){m(document.getElementById('cvModal'));document.getElementById('cvFrameContainer').innerHTML='<div class="modal-loading"><div class="spinner"></div><span>Generando CV...</span></div>';}
+    function sp(t,p){const e=document.getElementById('progressCard');e.classList.remove('modal-hidden');document.getElementById('progressText').textContent=t;document.getElementById('progressFill').style.width=p+'%';}
+    function lg(m,c){document.getElementById('logOutput').innerHTML+='<div'+(c?' class="log-'+c+'"':'')+'>'+m+'</div>';document.getElementById('logOutput').scrollTop=document.getElementById('logOutput').scrollHeight;}
+    function hp(){document.getElementById('progressCard').classList.add('modal-hidden');document.getElementById('logOutput').innerHTML='';}
+    async function loadStats(){const d=await api('/stats');if(!d.ok)return;const s=d.stats;document.getElementById('totalJobs').textContent=s.totalJobs;document.getElementById('totalApps').textContent=s.appliedJobs;document.getElementById('avgMatch').textContent=s.averageMatchScore.toFixed(0)+'%';document.getElementById('todayApps').textContent=s.todayApplications+'/'+s.maxDailyApplications;}
+    async function loadJobs(){const pf=document.getElementById('platformFilter').value,sf=document.getElementById('statusFilter').value,p=new URLSearchParams({limit:'50'});if(pf)p.set('platform',pf);const d=await api('/jobs?'+p.toString()),l=document.getElementById('jobsList');document.getElementById('jobsCount').textContent=d.jobs?.length||0;if(!d.ok||!d.jobs||!d.jobs.length){l.innerHTML='<div class="empty-state"><div class="empty-icon">🔮</div><p>No hay vacantes que coincidan con el filtro.</p></div>';return;}let j=d.jobs;if(sf==='applied')j=j.filter(x=>x.applied);if(sf==='pending')j=j.filter(x=>!x.applied);if(!j.length){l.innerHTML='<div class="empty-state"><div class="empty-icon">🔮</div><p>No hay vacantes con ese filtro.</p></div>';return;}l.innerHTML=j.map(j=>{const b=j.match_score>=60?'score-high':j.match_score>=30?'score-mid':'score-low',ic=j.match_score>=60?'✅':'⚠️',sk=j.matched_skills_json?JSON.parse(j.matched_skills_json):[];return '<div class="job-item"><div class="job-info"><div class="job-title">'+ic+' '+j.title+'</div><div class="job-meta">'+(j.company||'?')+' · '+(j.location||'?')+'</div>'+(sk.length?'<div class="job-skills">'+sk.slice(0,4).join(' · ')+(sk.length>4?' · +'+(sk.length-4):'')+'</div>':'')+'</div><div class="job-actions"><span class="score-badge '+b+'">'+j.match_score+'%</span>'+(j.url?'<a href="'+j.url+'" target="_blank" class="action-btn" title="LinkedIn">🔗</a>':'')+'<button class="action-btn cv" onclick="viewCV(\''+j.id+'\',\''+j.title.replace(/'/g,"")+'\')" title="CV">📄</button>'+(j.applied?'<span class="applied-badge">✅ Aplicado</span>':'<button class="action-btn apply" onclick="markApplied(\''+j.id+'\')" title="Postular">📋</button>')+'</div></div>'}).join('');}
+    async function runScrape(){if(running)return;running=true;document.getElementById('btnScrape').classList.add('btn-primary');sp('Buscando vacantes en LinkedIn...',10);lg('🔍 Iniciando búsqueda con '+KW.length+' keywords...');try{const d=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords:KW,location:"Monterrey, Nuevo León, México",maxResults:50})});if(d.ok){sp('✅ '+d.scrape.total+' vacantes · '+d.scrape.stored+' nuevas',100);lg('✅ <b>'+d.scrape.total+'</b> totales · <b>'+d.scrape.matched+'</b> matcheadas · <b>'+d.scrape.stored+'</b> almacenadas','success');(d.jobs||[]).forEach(j=>lg('  • '+j.title+' — '+j.company));}else{sp('❌ Error',100);lg('❌ '+(d.error||'desconocido'),'error');}}catch(e){sp('❌ Error de conexión',100);lg('❌ '+e.message,'error');}setTimeout(()=>{hp();loadJobs();loadStats();},2000);running=false;document.getElementById('btnScrape').classList.remove('btn-primary');}
+    async function runPipeline(){if(running)return;running=true;document.getElementById('btnPipeline').classList.add('btn-success');try{sp('🔍 Fase 1: Scraping LinkedIn...',10);lg('🔍 Buscando vacantes...');const sd=await api('/api/scrape',{method:'POST',body:JSON.stringify({keywords:KW,location:"Monterrey, Nuevo León, México",maxResults:30})});lg('✅ '+(sd.scrape?.total||0)+' vacantes encontradas','success');sp('📄 Fase 2: Generando CVs adaptados...',40);lg('📄 Generando CVs...');const jd=await api('/jobs?limit=20'),pj=(jd.jobs||[]).filter(j=>!j.applied).sort((a,b)=>b.match_score-a.match_score).slice(0,5);let cc=0;for(const job of pj){try{const cr=await api('/api/agent/cv/'+job.id,{method:'POST'});if(cr.ok){cvC[job.id]=cr.html;lg('  📄 CV: '+job.title+' ('+job.match_score+'%)');cc++;}}catch(e){lg('  ⚠️ Error CV: '+job.title);}}lg('✅ '+cc+' CVs generados','success');sp('📋 Fase 3: Procesando postulaciones...',70);lg('📋 Marcando postulaciones...');const ad=await api('/api/agent/run',{method:'POST',body:JSON.stringify({action:'apply',maxApply:5})});if(ad.ok)lg('✅ '+ad.applied+' postulaciones registradas (pendientes de revisión)','success');sp('✅ Pipeline completado',100);const st=await api('/stats');if(st.ok){const s=st.stats,tf=sd.scrape?.total||0;document.getElementById('summaryContent').innerHTML='<div class="summary-item"><span class="si-icon">🔍</span><div><div class="si-label">Vacantes encontradas</div><div class="si-value">'+tf+'</div></div></div><div class="summary-item"><span class="si-icon">✅</span><div><div class="si-label">En DB</div><div class="si-value">'+s.totalJobs+'</div></div></div><div class="summary-item"><span class="si-icon">📄</span><div><div class="si-label">CVs generados</div><div class="si-value">'+cc+'</div></div></div><div class="summary-item"><span class="si-icon">📋</span><div><div class="si-label">Postulaciones</div><div class="si-value">'+(ad.applied||0)+'</div></div></div><div class="summary-item"><span class="si-icon">🎯</span><div><div class="si-label">Match prom.</div><div class="si-value">'+s.averageMatchScore.toFixed(0)+'%</div></div></div><div class="summary-item"><span class="si-icon">📅</span><div><div class="si-label">Hoy</div><div class="si-value">'+s.todayApplications+'/'+s.maxDailyApplications+'</div></div></div>';document.getElementById('summaryCard').classList.remove('modal-hidden');}lg('🎯 <b>Pipeline completo!</b>','success');}catch(e){sp('❌ Error',100);lg('❌ '+e.message,'error');}setTimeout(()=>{hp();loadJobs();loadStats();},1500);running=false;document.getElementById('btnPipeline').classList.remove('btn-success');}
+    async function viewCV(id,tit){document.getElementById('cvModalTitle').textContent='📄 CV — '+(tit||'Vacante');document.getElementById('cvModal').classList.remove('modal-hidden');if(cvC[id]){document.getElementById('cvFrameContainer').innerHTML='<iframe id="cvFrame" srcdoc="'+cvC[id].replace(/"/g,'&quot;').replace(/\n/g,'')+'"></iframe>';return;}try{const d=await api('/api/agent/cv/'+id,{method:'POST'});if(d.ok&&d.html){cvC[id]=d.html;document.getElementById('cvFrameContainer').innerHTML='<iframe id="cvFrame" srcdoc="'+d.html.replace(/"/g,'&quot;').replace(/\n/g,'')+'"></iframe>';}else{document.getElementById('cvFrameContainer').innerHTML='<div class="modal-loading"><span style="font-size:32px;">❌</span><span>No se pudo generar el CV</span></div>';}}catch(e){document.getElementById('cvFrameContainer').innerHTML='<div class="modal-loading"><span style="font-size:32px;">❌</span><span>Error</span></div>';}}
+    async function markApplied(id){try{await api('/api/agent/run',{method:'POST',body:JSON.stringify({action:'apply',jobId:id})});loadJobs();}catch(e){alert('Error: '+e.message);}}
+    async function addManualJob(){const u=document.getElementById('manualUrl').value;if(!u)return;try{const d=await api('/jobs',{method:'POST',body:JSON.stringify({url:u,platform:'manual'})});if(d.ok){closeManualModal();loadJobs();loadStats();}else alert('Error: '+(d.error||'no se pudo agregar'));}catch(e){alert('Error: '+e.message);}}
+    function refreshAll(){loadStats();loadJobs();}
     refreshAll();
   </script>
 </body>

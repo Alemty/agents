@@ -493,17 +493,50 @@ app.get("/api/debug/scraper-test", async (c) => {
 });
 
 // ---------------------------
-// SPA fallback — serve index.html for non-API routes
+// SPA fallback — serve index.html for all non-API routes
 // ---------------------------
 
+app.get("/", async (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Job Agent</title><script>location.href="/index.html"</script></head><body><p>Redirecting...</p></body></html>`);
+});
+
+// POST /api/agent/cv/:jobId — Get CV HTML for a job (POST for easier client-side use)
+app.post("/api/agent/cv/:jobId", async (c) => {
+  const jobId = c.req.param("jobId");
+  const db = c.env.DB;
+  const job = await db.prepare("SELECT * FROM jobs WHERE id = ?").bind(jobId).first<any>();
+  if (!job) return c.json({ ok: false, error: "Job not found" }, 404);
+  const engine = new MatchEngine();
+  const cvGen = new CVGenerator();
+  const cvData = cvGen.generateCVData({ title: job.title, description: job.description, skills: JSON.parse(job.skills_json || "[]") });
+  const html = cvGen.generateHTML({ ...cvData, jobId: job.id, company: job.company });
+  return c.json({ ok: true, jobId: job.id, title: job.title, company: job.company, matchScore: job.match_score, html });
+});
+
+// GET /api/agent/cv/:jobId — For direct CV view
+app.get("/api/agent/cv/:jobId", async (c) => {
+  const jobId = c.req.param("jobId");
+  const db = c.env.DB;
+  const job = await db.prepare("SELECT * FROM jobs WHERE id = ?").bind(jobId).first<any>();
+  if (!job) return c.html("<h1>Job not found</h1>", 404);
+  const engine = new MatchEngine();
+  const cvGen = new CVGenerator();
+  const cvData = cvGen.generateCVData({ title: job.title, description: job.description, skills: JSON.parse(job.skills_json || "[]") });
+  const html = cvGen.generateHTML({ ...cvData, jobId: job.id, company: job.company });
+  return c.html(html);
+});
+
 app.all("*", async (c) => {
-  // If it's an API route, return 404
   if (c.req.path.startsWith("/api/")) {
     return c.json({ ok: false, error: "Not found" }, 404);
   }
-
-  // For SPA routes (non-API, non-file), redirect to /
-  return c.redirect("/");
+  // Try to serve from assets (static files)
+  try {
+    return await c.env.ASSETS.fetch(c.req.raw);
+  } catch {
+    return c.redirect("/index.html");
+  }
 });
 
 // ---------------------------
@@ -700,39 +733,6 @@ app.post("/api/agent/run", async (c) => {
   }
 
   return c.json({ ok: false, error: "Unknown action. Use: scrape, match, cv, apply, full" }, 400);
-});
-
-// POST /api/agent/cv/:jobId — Genera CV HTML para un job específico
-app.post("/api/agent/cv/:jobId", async (c) => {
-  const jobId = c.req.param("jobId");
-  const db = c.env.DB;
-
-  const job = await db.prepare("SELECT * FROM jobs WHERE id = ?").bind(jobId).first<any>();
-  if (!job) return c.json({ ok: false, error: "Job not found" }, 404);
-
-  const engine = new MatchEngine();
-  const cvGen = new CVGenerator();
-
-  const cvData = cvGen.generateCVData({
-    title: job.title,
-    description: job.description,
-    skills: JSON.parse(job.skills_json || "[]"),
-  });
-
-  const html = cvGen.generateHTML({
-    ...cvData,
-    jobId: job.id,
-    company: job.company,
-  });
-
-  return c.json({
-    ok: true,
-    jobId: job.id,
-    title: job.title,
-    company: job.company,
-    matchScore: job.match_score,
-    html,
-  });
 });
 
 export default app;
