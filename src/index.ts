@@ -599,8 +599,20 @@ app.use("/__scheduled", async (c) => {
 // Auto-Apply Pipeline — busca, analiza, genera CV, postula
 // ---------------------------
 
+// POST /api/agent/mark-applied — Mark a single job as applied
+app.post("/api/agent/mark-applied", async (c) => {
+  const { jobId } = await c.req.json<{ jobId: string }>();
+  if (!jobId) return c.json({ ok: false, error: "jobId required" }, 400);
+  const db = c.env.DB;
+  const now = new Date().toISOString();
+  await db.prepare("UPDATE jobs SET applied = 1, applied_at = ? WHERE id = ?").bind(now, jobId).run();
+  await db.prepare("INSERT INTO applications (id, job_id, status, applied_at) VALUES (?, ?, 'applied', ?)").bind(crypto.randomUUID(), jobId, now).run();
+  return c.json({ ok: true, jobId });
+});
+
 // POST /api/agent/run — Ejecuta el pipeline completo del agente
 app.post("/api/agent/run", async (c) => {
+  const body = await c.req.json<{
   const body = await c.req.json<{
     action: "scrape" | "match" | "cv" | "apply" | "full";
     keywords?: string[];
