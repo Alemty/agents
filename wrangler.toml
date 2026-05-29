@@ -24,6 +24,10 @@ MAX_APPLICATIONS_DAY = "20"
 # LINKEDIN_PASSWORD=
 # ANTHROPIC_API_KEY=
 
+# Cron triggers — automatic job scraping
+[triggers]
+crons = ["0 10 * * 1", "0 14 * * 3"]  # Lunes 10am, Miércoles 2pm
+
 # Routes
 routes = [
   { pattern = "agents.alemty.eth.limo", custom_domain = true }

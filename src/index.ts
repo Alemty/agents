@@ -381,4 +381,63 @@ app.all("*", async (c) => {
   return c.redirect("/");
 });
 
+// ---------------------------
+// Cron trigger — automatic scraping
+// ---------------------------
+
+app.use("/__scheduled", async (c) => {
+  try {
+    const email = c.env.LINKEDIN_EMAIL;
+    const password = c.env.LINKEDIN_PASSWORD;
+
+    if (!email || !password) {
+      console.log("[Cron] LinkedIn credentials not configured, skipping scrape");
+      return c.json({ ok: false, error: "No credentials" });
+    }
+
+    const scraper = new LinkedInScraper(email, password);
+    const engine = new MatchEngine();
+    const db = c.env.DB;
+
+    const keywords = ["Web3", "Solidity", "Blockchain", "Smart Contract", "Full Stack Developer", "React Developer", "Blockchain Developer"];
+    const jobs = await scraper.scrapeJobs({
+      keywords,
+      location: "Monterrey",
+      maxResults: 30,
+      daysBack: 7,
+    });
+
+    let stored = 0;
+    let matched = 0;
+
+    for (const job of jobs) {
+      const existing = await db.prepare("SELECT id FROM jobs WHERE url = ?").bind(job.url).first();
+      if (existing) continue;
+
+      const match = engine.calculateMatch({ title: job.title, description: job.description, skills: job.skills });
+
+      if (match.score >= Number(c.env.MATCH_THRESHOLD || 60)) {
+        await db.prepare(
+          `INSERT INTO jobs (id, platform, title, company, location, description, url, modality, salary, skills_json, match_score, matched_skills_json, missing_skills_json, keyword_hits, analysis, scraped_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          crypto.randomUUID(), "linkedin", job.title, job.company, job.location,
+          job.description, job.url, job.modality, job.salary,
+          JSON.stringify(job.skills), match.score,
+          JSON.stringify(match.matched), JSON.stringify(match.missing),
+          match.keywordHits, match.analysis, new Date().toISOString()
+        ).run();
+        stored++;
+      }
+      matched++;
+    }
+
+    console.log(`[Cron] Scrape complete: ${jobs.length} found, ${matched} matched, ${stored} stored`);
+    return c.json({ ok: true, total: jobs.length, matched, stored });
+  } catch (e: any) {
+    console.error(`[Cron] Error: ${e.message}`);
+    return c.json({ ok: false, error: e.message }, 500);
+  }
+});
+
 export default app;
