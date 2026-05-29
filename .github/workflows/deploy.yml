@@ -28,6 +28,9 @@ jobs:
           secrets: |
             LINKEDIN_EMAIL
             LINKEDIN_PASSWORD
+        env:
+          LINKEDIN_EMAIL: ${{ secrets.LINKEDIN_EMAIL }}
+          LINKEDIN_PASSWORD: ${{ secrets.LINKEDIN_PASSWORD }}
 
   d1-migrations:
     runs-on: ubuntu-latest
