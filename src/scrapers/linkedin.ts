@@ -148,92 +148,53 @@ export class LinkedInScraper {
 
   /**
    * Parse job cards from LinkedIn's guest job search API HTML
-   * The /jobs-guest/jobs/api/seeMoreJobPostings/search endpoint returns structured HTML
    */
   private parseGuestJobCards(html: string): any[] {
     const cards: any[] = [];
     
-    // Split by job-card-container
-    const cardRegex = /<div[^>]*class="[^"]*job-card-container[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/gi;
+    // LinkedIn uses base-card class in guest API
+    const cardRegex = /<div[^>]*class="[^"]*base-card[^"]*job-search-card[^"]*"[^>]*data-entity-urn="urn:li:jobPosting:(\d+)"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/gi;
     let match;
 
     while ((match = cardRegex.exec(html)) !== null) {
-      const cardHtml = match[1];
+      const jobId = match[1];
+      const cardHtml = match[2];
 
-      // Extract job ID from data-entity-urn or similar
-      const idMatch = cardHtml.match(/data-entity-urn="[^:]+:(\d+)"/)
-        || cardHtml.match(/data-job-id="(\d+)"/)
-        || cardHtml.match(/jobPostingId:(\d+)/);
-      const id = idMatch ? idMatch[1] : "";
-
-      // Extract title
-      const titleMatch = cardHtml.match(/<span[^>]*class="[^"]*screen-reader-text[^"]*"[^>]*>([\s\S]*?)<\/span>/i)
-        || cardHtml.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i)
-        || cardHtml.match(/aria-label="([^"]+)"/i);
+      // Extract title from h3 with class base-search-card__title
+      const titleMatch = cardHtml.match(/<h3[^>]*class="[^"]*base-search-card__title[^"]*"[^>]*>\s*([\s\S]*?)\s*<\/h3>/i)
+        || cardHtml.match(/<span class="sr-only">\s*([\s\S]*?)\s*<\/span>/i);
       const title = titleMatch ? this.cleanText(titleMatch[1]) : "";
 
-      // Extract company
-      const companyMatch = cardHtml.match(/class="[^"]*job-card-container__company-name[^"]*"[^>]*>([\s\S]*?)</i)
-        || cardHtml.match(/<a[^>]*class="[^"]*job-card-container__company-name[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+      // Extract company (h4 with class base-search-card__subtitle)
+      const companyMatch = cardHtml.match(/<h4[^>]*class="[^"]*base-search-card__subtitle[^"]*"[^>]*>([\s\S]*?)<\/h4>/i)
+        || cardHtml.match(/class="[^"]*hidden-nested-link[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
       const company = companyMatch ? this.cleanText(companyMatch[1]) : "";
 
       // Extract location
-      const locationMatch = cardHtml.match(/class="[^"]*job-card-container__metadata-item[^"]*"[^>]*>([\s\S]*?)<\/li>/i)
-        || cardHtml.match(/<li[^>]*class="[^"]*job-card-container__metadata-item[^"]*"[^>]*>([\s\S]*?)<\/li>/i);
+      const locationMatch = cardHtml.match(/class="[^"]*job-search-card__location[^"]*"[^>]*>([\s\S]*?)<\/span>/i)
+        || cardHtml.match(/<span[^>]*class="[^"]*base-search-card__metadata[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
       const location = locationMatch ? this.cleanText(locationMatch[1]) : "";
 
       // Extract posted time
-      const timeMatch = cardHtml.match(/class="[^"]*job-card-container__listed-state[^"]*"[^>]*>([\s\S]*?)<span/i)
-        || cardHtml.match(/(\d+)\s+(minute|hour|day|week|month|día|hora|semana|mes)\s+/i);
-      const postedAt = timeMatch ? this.cleanText(timeMatch[1]) : new Date().toISOString();
+      const timeMatch = cardHtml.match(/class="[^"]*job-search-card__listed-state[^"]*"[^>]*>\s*<time[^>]*>([\s\S]*?)<\/time>/i)
+        || cardHtml.match(/<time[^>]*>([\s\S]*?)<\/time>/i);
+      const postedAt = timeMatch ? this.cleanText(timeMatch[1]) : "";
 
-      // Extract salary if present
+      // Extract salary
       const salaryMatch = cardHtml.match(/\$[\d,]+[\s-]*\$?[\d,]*/g);
       const salary = salaryMatch ? salaryMatch[0] : null;
 
-      // Extract modality
-      const modalityMatch = cardHtml.match(/(Presencial|Remoto|Híbrido|Hybrid|Remote|On-site|Hibrido)/i);
-      const modality = modalityMatch ? modalityMatch[1] : "";
-
-      if (id && title) {
+      if (jobId && title) {
         cards.push({
-          id,
+          id: jobId,
           title,
           company,
           location,
           salary,
-          modality,
+          modality: "",
           description: "",
           postedAt,
         });
-      }
-    }
-
-    // Fallback: try parsing with simpler regex if no cards found
-    if (cards.length === 0) {
-      const simpleRegex = /data-entity-urn="[^:]+:(\d+)"/g;
-      let idMatch;
-      while ((idMatch = simpleRegex.exec(html)) !== null) {
-        const jobId = idMatch[1];
-        // Find surrounding context for this job
-        const startPos = Math.max(0, idMatch.index - 500);
-        const contextHtml = html.slice(startPos, idMatch.index + 500);
-        
-        const titleM = contextHtml.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i);
-        const companyM = contextHtml.match(/<a[^>]*class="[^"]*company-name[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
-        
-        if (titleM) {
-          cards.push({
-            id: jobId,
-            title: this.cleanText(titleM[1]),
-            company: companyM ? this.cleanText(companyM[1]) : "",
-            location: "",
-            salary: null,
-            modality: "",
-            description: "",
-            postedAt: new Date().toISOString(),
-          });
-        }
       }
     }
 
@@ -241,10 +202,10 @@ export class LinkedInScraper {
   }
 
   /**
-   * Parse job detail page HTML
+   * Parse job detail page HTML to extract description
    */
   private parseJobDetail(html: string, card: any): any {
-    // Extract description
+    // Extract description from detail page
     const descMatch = html.match(/class="[^"]*description__text[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
       || html.match(/class="[^"]*show-more-less-html[^"]*"[^>]*>([\s\S]*?)<\/div>/i)
       || html.match(/id="job-details"[^>]*>([\s\S]*?)<\/div>/i);
@@ -253,7 +214,7 @@ export class LinkedInScraper {
     // Extract skills from description
     const skills = this.extractSkills(description);
 
-    // Better modality extraction from detail
+    // Modality from detail page
     const modalityMatch = html.match(/(Presencial|Remoto|Híbrido|Hybrid|Remote|On-site|Hibrido)/i);
     const modality = modalityMatch ? modalityMatch[1] : card.modality || "";
 
