@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🤖 Job Agent — alemty</title>
+  <meta name="description" content="Job Agent IA — Búsqueda y postulación automática a vacantes Web3/Blockchain. Por Alejandro Gutierrez Zavala (Alemty)." />
+  <meta name="keywords" content="job agent, web3, blockchain, smart contracts, solidity, ai agent, alemty, alejandro gutierrez" />
+  <meta property="og:title" content="🤖 Job Agent — alemty" />
+  <meta property="og:description" content="Agente IA de búsqueda y postulación automática a vacantes Web3" />
+  <meta property="og:image" content="https://job-agent.alejandrogtzz93.workers.dev/og.png" />
+  <meta name="ens.domain" content="alemty.eth" />
+  <meta name="ens.dns" content="alemty.eth.limo" />
+
+  <!-- ===== DETECCIÓN DE RUTA ===== -->
+  <script>
+    // Detecta desde qué URL ENS se accedió y redirige al Worker si es necesario
+    (function() {
+      const host = window.location.hostname;
+      const path = window.location.pathname;
+      const workerUrl = 'https://job-agent.alejandrogtzz93.workers.dev';
+
+      // Todas las rutas ENS/IPFS que debe servir este index
+      // - alemty.eth.limo (raíz)
+      // - alemty.eth.limo/agents
+      // - alemty.eth/agents (cuando se resuelva vía gateway)
+      // - agents.alemty.eth (subdominio ENS)
+      // - Cualquier gateway IPFS
+
+      // Si el path es /agents o termina en /agents, redirige al worker
+      // Si es la raíz, muestra esta landing page
+      const isAgentsPath = path === '/agents' || path === '/agents/';
+
+      // Guardamos la ruta para que el JS lo use
+      window.__ENS_PATH = path;
+      window.__ENS_HOST = host;
+      window.__WORKER_URL = workerUrl;
+    })();
+  </script>
+
+  <style>
+    /* ===== CSS INLINE ===== */
+    :root {
+      --bg: #0a0a0f;
+      --bg-card: #12121e;
+      --border: #1e1e2e;
+      --accent: #6366f1;
+      --accent-glow: rgba(99,102,241,0.25);
+      --text: #e4e4e7;
+      --text-dim: #71717a;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 720px;
+      width: 100%;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #e4e4e7, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-top: 0.15rem;
+    }
+
+    .badge-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      color: var(--green);
+      background: rgba(34,197,94,0.1);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+
+    .badge-online::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(99,102,241,0.3);
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 0.15rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #5558e6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    /* Input / Textarea */
+    input, textarea {
+      width: 100%;
+      background: #0d0d16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 100px; }
+
+    .match-result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #0d0d16;
+      border-radius: 10px;
+      border-left: 3px solid var(--accent);
+      display: none;
+    }
+
+    .match-result.show { display: block; }
+
+    .match-score {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .match-detail {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    .match-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+
+    .match-tag {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    .match-tag.matched {
+      border-color: rgba(34,197,94,0.3);
+      color: var(--green);
+    }
+
+    .match-tag.missing {
+      border-color: rgba(234,179,8,0.3);
+      color: var(--yellow);
+    }
+
+    /* Jobs list */
+    .job-item {
+      background: #0d0d16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .job-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .job-meta {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 0.15rem;
+    }
+
+    .job-score {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .job-score.high { color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); }
+    .job-score.mid { color: var(--yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); }
+    .job-score.low { color: var(--red); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+
+    /* Footer */
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, #1a1a2e 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+      height: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Path detection banner */
+    .path-banner {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (min-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Path Detection Banner (solo visible en ENS/IPFS) -->
+    <div id="pathBanner" class="path-banner" style="display:none;"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-icon">🤖</div>
+      <div>
+        <h1>Job Agent</h1>
+        <div class="subtitle">
+          Alejandro Gutierrez Zavala · <span class="badge-online">online</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat">
+        <div class="stat-value" id="statJobs">—</div>
+        <div class="stat-label">Vacantes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statApps">—</div>
+        <div class="stat-label">Postulaciones</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statMatch">—</div>
+        <div class="stat-label">Match Prom.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="statToday">—</div>
+        <div class="stat-label">Hoy</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-group">
+      <a href="https://job-agent.alejandrogtzz93.workers.dev" class="btn btn-primary" target="_blank">
+        🚀 Abrir Dashboard
+      </a>
+      <a href="https://github.com/Alemty/agents" class="btn btn-secondary" target="_blank">
+        📂 Código Fuente
+      </a>
+    </div>
+
+    <!-- Quick Match -->
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title">🧪 Probar Matching</div>
+      <input id="inputTitle" placeholder="Título de la vacante (ej. Senior Solidity Developer)" style="margin-bottom:0.5rem;" />
+      <textarea id="inputDesc" placeholder="Pega la descripción de la vacante aquí..."></textarea>
+      <div class="btn-group">
+        <button onclick="testMatch()" class="btn btn-primary">Analizar 🔍</button>
+      </div>
+      <div id="matchResult" class="match-result"></div>
+    </div>
+
+    <!-- Latest Jobs -->
+    <div class="card">
+      <div class="card-title">📋 Últimas Vacantes</div>
+      <div id="jobsContainer">
+        <div class="skeleton"></div>
+        <div class="skeleton" style="width:80%;"></div>
+        <div class="skeleton" style="width:60%;"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        <strong>Alejandro de Jesus Gutierrez Zavala</strong> · 
+        <a href="https://github.com/Alemty" target="_blank">GitHub</a> · 
+        <a href="https://linkedin.com/in/alemty" target="_blank">LinkedIn</a> · 
+        <a href="https://alemty.eth.limo" target="_blank">Portfolio</a>
+      </p>
+      <p style="margin-top:0.5rem;">
+        Construido con Hono + Cloudflare Workers + D1 · 
+        Desplegado en IPFS vía ENS
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // ===== CONFIG =====
+    const WORKER_URL = window.__WORKER_URL || 'https://job-agent.alejandrogtzz93.workers.dev';
+    const ENS_PATH = window.__ENS_PATH || '/';
+
+    // ===== PATH DETECTION =====
+    (function() {
+      const banner = document.getElementById('pathBanner');
+      const host = window.location.hostname;
+      const path = window.location.pathname;
+      const isEns = host.includes('eth.limo') || host.includes('.eth') || host.includes('ipfs');
+      const isAgentsSubpath = path.includes('/agents');
+
+      if (isEns) {
+        let msg = `🌐 Sirviendo desde ENS: ${host}${path}`;
+        if (isAgentsSubpath) {
+          msg += ' · Redirigiendo al dashboard...';
+          setTimeout(() => { window.location.href = WORKER_URL; }, 2000);
+        }
+        banner.textContent = msg;
+        banner.style.display = 'block';
+      }
+    })();
+
+    // ===== API HELPER =====
+    async function api(path, opts = {}) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(WORKER_URL + path, {
+          headers: { 'Content-Type': 'application/json', ...opts.headers },
+          signal: controller.signal,
+          ...opts,
+        });
+        clearTimeout(timeout);
+        return await res.json();
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    }
+
+    // ===== LOAD STATS =====
+    async function loadStats() {
+      const data = await api('/stats');
+      if (!data.ok || !data.stats) {
+        document.getElementById('statJobs').textContent = '?';
+        document.getElementById('statApps').textContent = '?';
+        document.getElementById('statMatch').textContent = '?';
+        document.getElementById('statToday').textContent = '?';
+        return;
+      }
+      const s = data.stats;
+      document.getElementById('statJobs').textContent = s.totalJobs || 0;
+      document.getElementById('statApps').textContent = s.appliedJobs || 0;
+      document.getElementById('statMatch').textContent = (s.averageMatchScore || 0) + '%';
+      document.getElementById('statToday').textContent = (s.todayApplications || 0) + '/' + (s.maxDailyApplications || 20);
+    }
+
+    // ===== LOAD JOBS =====
+    async function loadJobs() {
+      const container = document.getElementById('jobsContainer');
+      const data = await api('/jobs?limit=5');
+
+      if (!data.ok || !data.jobs || data.jobs.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-dim);font-size:0.8rem;">No hay vacantes aún. Usa el dashboard para agregar.</p>';
+        return;
+      }
+
+      container.innerHTML = data.jobs.slice(0, 5).map(j => {
+        const cls = j.match_score >= 60 ? 'high' : j.match_score >= 30 ? 'mid' : 'low';
+        const icon = j.match_score >= 60 ? '✅' : j.match_score >= 30 ? '⚠️' : '❌';
+        return `<div class="job-item">
+          <div>
+            <div class="job-title">${icon} ${j.title}</div>
+            <div class="job-meta">${j.company || '?'} · ${j.platform} · ${j.location || '?'}</div>
+          </div>
+          <span class="job-score ${cls}">${j.match_score}%</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== TEST MATCH =====
+    async function testMatch() {
+      const title = document.getElementById('inputTitle').value.trim();
+      const desc = document.getElementById('inputDesc').value.trim();
+      const resultDiv = document.getElementById('matchResult');
+
+      if (!title || !desc) {
+        resultDiv.className = 'match-result show';
+        resultDiv.innerHTML = '<div style="color:var(--red);font-size:0.85rem;">❌ Título y descripción requeridos</div>';
+        return;
+      }
+
+      resultDiv.className = 'match-result show';
+      resultDiv.innerHTML = '<div class="skeleton" style="height:60px;"></div>';
+
+      const data = await api('/match', {
+        method: 'POST',
+        body: JSON.stringify({ title, description: desc }),
+      });
+
+      if (!data.ok || !data.match) {
+        resultDiv.innerHTML = `<div style="color:var(--red);font-size:0.85rem;">❌ Error: ${data.error || 'Desconocido'}</div>`;
+        return;
+      }
+
+      const m = data.match;
+      const scoreColor = m.score >= 60 ? 'var(--green)' : m.score >= 30 ? 'var(--yellow)' : 'var(--red)';
+      const scoreIcon = m.score >= 60 ? '✅' : m.score >= 30 ? '⚠️' : '❌';
+
+      resultDiv.innerHTML = `
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+          <span style="font-size:1.5rem;">${scoreIcon}</span>
+          <span class="match-score" style="color:${scoreColor};">${m.score}%</span>
+          <span style="font-size:0.75rem;color:var(--text-dim);">${m.keywordHits} keywords</span>
+        </div>
+        ${m.matched.length ? `<div class="match-tags">${m.matched.slice(0,12).map(s => `<span class="match-tag matched">${s}</span>`).join('')}</div>` : ''}
+        ${m.missing.length ? `<div class="match-tags" style="margin-top:0.35rem;"><span style="font-size:0.7rem;color:var(--yellow);margin-right:0.25rem;">📚 Aprender:</span>${m.missing.slice(0,4).map(s => `<span class="match-tag missing">${s}</span>`).join('')}</div>` : ''}
+        <div class="match-detail">${m.analysis}</div>
+      `;
+    }
+
+    // ===== INIT =====
+    loadStats();
+    loadJobs();
+  </script>
+</body>
+</html>
