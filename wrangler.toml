@@ -1,6 +1,7 @@
 name = "job-agent"
 main = "src/index.ts"
 compatibility_date = "2026-04-11"
+account_id = "792fb5a1c2fb0af960074a1e869db0ed"
 
 # Assets (frontend dashboard)
 [assets]
