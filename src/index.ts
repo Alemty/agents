@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { MatchEngine } from "./matcher/matchEngine";
 import { LinkedInScraper } from "./scrapers";
 import type { ScrapeOptions } from "./scrapers";
+import { CVGenerator } from "./cv";
 import { JobSchema, ApplicationSchema } from "./db/schema";
 
 export type Bindings = {
@@ -438,6 +439,177 @@ app.use("/__scheduled", async (c) => {
     console.error(`[Cron] Error: ${e.message}`);
     return c.json({ ok: false, error: e.message }, 500);
   }
+});
+
+// ---------------------------
+// Auto-Apply Pipeline — busca, analiza, genera CV, postula
+// ---------------------------
+
+// POST /api/agent/run — Ejecuta el pipeline completo del agente
+app.post("/api/agent/run", async (c) => {
+  const body = await c.req.json<{
+    action: "scrape" | "match" | "cv" | "apply" | "full";
+    keywords?: string[];
+    location?: string;
+    jobId?: string;
+    maxResults?: number;
+    maxApply?: number;
+  }>();
+
+  const email = c.env.LINKEDIN_EMAIL;
+  const password = c.env.LINKEDIN_PASSWORD;
+  const db = c.env.DB;
+
+  if (!email || !password) {
+    return c.json({ ok: false, error: "LinkedIn credentials not configured" }, 400);
+  }
+
+  const engine = new MatchEngine();
+  const cvGen = new CVGenerator();
+
+  // === SCRAPE ===
+  if (body.action === "scrape" || body.action === "full") {
+    const scraper = new LinkedInScraper(email, password);
+    const jobs = await scraper.scrapeJobs({
+      keywords: body.keywords || ["Web3", "Solidity", "Blockchain", "Smart Contract", "Full Stack Developer", "React Developer", "Blockchain Developer"],
+      location: body.location || "Monterrey, Nuevo León, México",
+      maxResults: body.maxResults || 30,
+      daysBack: 7,
+    });
+
+    let stored = 0;
+    for (const job of jobs) {
+      const existing = await db.prepare("SELECT id FROM jobs WHERE url = ?").bind(job.url).first();
+      if (existing) continue;
+
+      const match = engine.calculateMatch({ title: job.title, description: job.description, skills: job.skills });
+      if (match.score >= Number(c.env.MATCH_THRESHOLD || 60)) {
+        const jobId = crypto.randomUUID();
+        await db.prepare(
+          `INSERT INTO jobs (id, platform, title, company, location, description, url, modality, salary, skills_json, match_score, matched_skills_json, missing_skills_json, keyword_hits, analysis, scraped_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          jobId, "linkedin", job.title, job.company, job.location,
+          job.description, job.url, job.modality, job.salary,
+          JSON.stringify(job.skills), match.score,
+          JSON.stringify(match.matched), JSON.stringify(match.missing),
+          match.keywordHits, match.analysis, new Date().toISOString()
+        ).run();
+        stored++;
+      }
+    }
+
+    if (body.action === "scrape") {
+      return c.json({ ok: true, action: "scrape", total: jobs.length, stored });
+    }
+  }
+
+  // === CV GENERATION ===
+  if (body.action === "cv" || body.action === "apply" || body.action === "full") {
+    const cvCreated: any[] = [];
+    const jobs = await db.prepare(
+      "SELECT * FROM jobs WHERE applied = 0 AND match_score >= ? ORDER BY match_score DESC LIMIT ?"
+    ).bind(Number(c.env.MATCH_THRESHOLD || 60), body.jobId ? 1 : 10).all();
+
+    for (const job of jobs.results || []) {
+      const cvData = cvGen.generateCVData({
+        title: job.title || "",
+        description: job.description || "",
+        skills: JSON.parse(job.skills_json || "[]"),
+      });
+
+      const html = cvGen.generateHTML({
+        ...cvData,
+        jobId: job.id,
+        company: job.company,
+      });
+
+      // En un Worker no podemos crear archivos, devolvemos HTML
+      cvCreated.push({
+        jobId: job.id,
+        title: job.title,
+        company: job.company,
+        matchScore: job.match_score,
+        cvHtml: html, // HTML listo para imprimir/convertir a PDF
+      });
+
+      // Marcar CV generado
+      await db.prepare("UPDATE jobs SET cv_path = ? WHERE id = ?")
+        .bind(`cv_${job.id}_generated`, job.id).run();
+    }
+
+    if (body.action === "cv") {
+      return c.json({ ok: true, action: "cv", generated: cvCreated.length, cvs: cvCreated.slice(0, 3) });
+    }
+  }
+
+  // === AUTO-APPLY ===
+  if (body.action === "apply" || body.action === "full") {
+    const maxApply = body.maxApply || 5;
+    const toApply = await db.prepare(
+      "SELECT * FROM jobs WHERE applied = 0 AND match_score >= ? ORDER BY match_score DESC LIMIT ?"
+    ).bind(Number(c.env.MATCH_THRESHOLD || 60), maxApply).all();
+
+    let applied = 0;
+    for (const job of toApply.results || []) {
+      try {
+        // Mark as applied in DB (actual LinkedIn application requires Browser Rendering)
+        const appId = `app-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        await db.prepare(
+          "INSERT INTO applications (id, job_id, cv_path, score, status, applied_at) VALUES (?, ?, ?, ?, ?, ?)"
+        ).bind(appId, job.id, `cv_${job.id}`, job.match_score, "pending", new Date().toISOString()).run();
+
+        await db.prepare("UPDATE jobs SET applied = 1, cv_path = ? WHERE id = ?")
+          .bind(`cv_${job.id}`, job.id).run();
+        applied++;
+      } catch (e) {
+        console.error(`[Apply] Error applying to ${job.id}: ${e}`);
+      }
+    }
+
+    return c.json({
+      ok: true,
+      action: "apply",
+      applied,
+      status: "pending_review", // Las postulaciones quedan marcadas para revisión
+      note: "Postulaciones marcadas en DB. Para aplicar automáticamente en LinkedIn, se necesita Browser Rendering API activo.",
+    });
+  }
+
+  return c.json({ ok: false, error: "Unknown action. Use: scrape, match, cv, apply, full" }, 400);
+});
+
+// POST /api/agent/cv/:jobId — Genera CV HTML para un job específico
+app.post("/api/agent/cv/:jobId", async (c) => {
+  const jobId = c.req.param("jobId");
+  const db = c.env.DB;
+
+  const job = await db.prepare("SELECT * FROM jobs WHERE id = ?").bind(jobId).first<any>();
+  if (!job) return c.json({ ok: false, error: "Job not found" }, 404);
+
+  const engine = new MatchEngine();
+  const cvGen = new CVGenerator();
+
+  const cvData = cvGen.generateCVData({
+    title: job.title,
+    description: job.description,
+    skills: JSON.parse(job.skills_json || "[]"),
+  });
+
+  const html = cvGen.generateHTML({
+    ...cvData,
+    jobId: job.id,
+    company: job.company,
+  });
+
+  return c.json({
+    ok: true,
+    jobId: job.id,
+    title: job.title,
+    company: job.company,
+    matchScore: job.match_score,
+    html,
+  });
 });
 
 export default app;
