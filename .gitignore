@@ -1,6 +1,28 @@
+# Dependencies
 node_modules/
-.dev.vars
+
+# Environment & Secrets
 .env
+.env.*
+.dev.vars
+.dev.vars.*
+!.env.example
+!.dev.vars.example
+
+# Cloudflare
 .wrangler/
 worker-configuration.d.ts
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
