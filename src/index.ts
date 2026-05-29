@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { MatchEngine } from "./matcher/matchEngine";
+import { LinkedInScraper } from "./scrapers";
+import type { ScrapeOptions } from "./scrapers";
 import { JobSchema, ApplicationSchema } from "./db/schema";
 
 export type Bindings = {
@@ -243,6 +245,120 @@ app.post("/match", async (c) => {
       missing: result.missing,
       analysis: result.analysis,
       keywordHits: result.keywordHits,
+    },
+  });
+});
+
+// ---------------------------
+// Scrape (LinkedIn via Browser Rendering)
+// ---------------------------
+
+// POST /api/scrape — Trigger job scraping
+app.post("/api/scrape", async (c) => {
+  const body = await c.req.json<{
+    keywords?: string[];
+    location?: string;
+    maxResults?: number;
+    daysBack?: number;
+    autoMatch?: boolean;
+    apiKey?: string;
+  }>();
+
+  const email = c.env.LINKEDIN_EMAIL;
+  const password = c.env.LINKEDIN_PASSWORD;
+
+  if (!email || !password) {
+    return c.json({ ok: false, error: "LinkedIn credentials not configured. Set LINKEDIN_EMAIL and LINKEDIN_PASSWORD secrets." }, 400);
+  }
+
+  const options: ScrapeOptions = {
+    keywords: body.keywords || ["Web3", "Solidity", "Blockchain", "Smart Contract", "Full Stack Developer", "React Developer", "JavaScript", "TypeScript"],
+    location: body.location || "Monterrey",
+    maxResults: body.maxResults || 25,
+    daysBack: body.daysBack || 7,
+  };
+
+  // Scrape LinkedIn
+  const scraper = new LinkedInScraper(email, password);
+  const jobs = await scraper.scrapeJobs(options);
+
+  // Optionally run matching and store
+  let matched = 0;
+  let stored = 0;
+
+  if (body.autoMatch !== false) {
+    const engine = new MatchEngine();
+    const db = c.env.DB;
+
+    for (const job of jobs) {
+      // Check duplicate
+      const existing = await db.prepare("SELECT id FROM jobs WHERE url = ?").bind(job.url).first();
+      if (existing) continue;
+
+      const match = engine.calculateMatch({
+        title: job.title,
+        description: job.description,
+        skills: job.skills,
+      });
+
+      if (match.score >= Number(c.env.MATCH_THRESHOLD || 60)) {
+        await db.prepare(
+          `INSERT INTO jobs (id, platform, title, company, location, description, url, modality, salary, skills_json, match_score, matched_skills_json, missing_skills_json, keyword_hits, analysis, scraped_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          crypto.randomUUID(),
+          "linkedin",
+          job.title,
+          job.company,
+          job.location,
+          job.description,
+          job.url,
+          job.modality,
+          job.salary,
+          JSON.stringify(job.skills),
+          match.score,
+          JSON.stringify(match.matched),
+          JSON.stringify(match.missing),
+          match.keywordHits,
+          match.analysis,
+          new Date().toISOString()
+        ).run();
+        stored++;
+      }
+      matched++;
+    }
+  }
+
+  return c.json({
+    ok: true,
+    scrape: {
+      total: jobs.length,
+      matched,
+      stored,
+      threshold: Number(c.env.MATCH_THRESHOLD || 60),
+      keywords: options.keywords,
+      location: options.location,
+    },
+    jobs: jobs.slice(0, 5).map((j) => ({
+      title: j.title,
+      company: j.company,
+      location: j.location,
+      url: j.url,
+    })),
+  });
+});
+
+// GET /api/scrape/status — Check scrape status
+app.get("/api/scrape/status", async (c) => {
+  const email = c.env.LINKEDIN_EMAIL;
+  const password = c.env.LINKEDIN_PASSWORD;
+
+  return c.json({
+    ok: true,
+    config: {
+      linkedinConfigured: !!email && !!password,
+      threshold: Number(c.env.MATCH_THRESHOLD || 60),
+      maxDaily: Number(c.env.MAX_APPLICATIONS_DAY || 20),
     },
   });
 });
