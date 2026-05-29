@@ -1,0 +1,113 @@
+name: Deploy ENS landing to IPFS (Pinata) — ipfs/ only
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  pinata:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify ipfs/ bundle
+        run: |
+          echo "✅ Subiendo SOLO ./ipfs a IPFS (Job Agent ENS landing)"
+          echo "Contenido de ipfs/:"
+          ls -lah ipfs
+          echo "📦 Tamaño:"
+          du -sh ipfs || true
+          echo "📄 Archivos:"
+          find ipfs -type f | wc -l || true
+
+      - name: Upload ipfs/ to Pinata
+        env:
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+        run: |
+          npm init -y >/dev/null
+          npm install got form-data recursive-fs base-path-converter >/dev/null
+
+          cat > pinata_upload.mjs <<'EOF'
+          import fs from "fs";
+          import FormData from "form-data";
+          import rfs from "recursive-fs";
+          import basePathConverter from "base-path-converter";
+          import got from "got";
+
+          const jwt = process.env.PINATA_JWT;
+          if (!jwt) {
+            console.error("❌ PINATA_JWT not set");
+            process.exit(1);
+          }
+
+          // Auth check
+          await got.get("https://api.pinata.cloud/data/testAuthentication", {
+            headers: { Authorization: `Bearer ${jwt}` },
+          });
+
+          const src = "ipfs";
+          const { files } = await rfs.read(src);
+          console.log(`📄 Files to upload: ${files.length}`);
+
+          const data = new FormData();
+          for (const file of files) {
+            data.append("file", fs.createReadStream(file), {
+              filepath: basePathConverter(src, file),
+            });
+          }
+
+          data.append("pinataMetadata", JSON.stringify({
+            name: "job-agent-ens-landing",
+            keyvalues: {
+              project: "job-agent",
+              type: "ens-landing",
+              author: "alemty",
+              repo: "https://github.com/Alemty/agents"
+            }
+          }));
+
+          // Optional: group pin with alemtyDAO
+          data.append("pinataOptions", JSON.stringify({
+            cidVersion: 1,
+            wrapWithDirectory: true
+          }));
+
+          try {
+            const res = await got.post(
+              "https://api.pinata.cloud/pinning/pinFileToIPFS",
+              {
+                headers: {
+                  Authorization: `Bearer ${jwt}`,
+                  ...data.getHeaders(),
+                },
+                body: data,
+                timeout: { request: 300000 },
+              }
+            ).json();
+
+            const cid = res.IpfsHash;
+            console.log("✅ IPFS CID:", cid);
+            console.log("🔗 https://gateway.pinata.cloud/ipfs/" + cid);
+            console.log("");
+            console.log("🌐 Para ENS alemty.eth:");
+            console.log("   Raíz → contenthash apuntar a este CID");
+            console.log("   O subdominio agents.alemty.eth → contenthash apuntar a este CID");
+            console.log("");
+            console.log("📝 DNSLink (si aplica):");
+            console.log(`   _dnslink.agents.alemty.eth  TXT  "dnslink=/ipfs/${cid}"`);
+          } catch (err) {
+            console.error("❌ Upload failed");
+            console.error(err?.response?.body || err);
+            process.exit(1);
+          }
+          EOF
+
+          node pinata_upload.mjs
