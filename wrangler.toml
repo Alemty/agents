@@ -6,7 +6,7 @@ account_id = "792fb5a1c2fb0af960074a1e869db0ed"
 # Assets (frontend dashboard)
 [assets]
 directory = "./public"
-not_found_handling = "single-page-application"
+not_found_handling = "none"
 
 # D1 database (jobs, applications, stats)
 [[d1_databases]]

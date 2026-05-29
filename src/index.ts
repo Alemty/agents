@@ -367,4 +367,18 @@ app.get("/api/scrape/status", async (c) => {
   });
 });
 
+// ---------------------------
+// SPA fallback — serve index.html for non-API routes
+// ---------------------------
+
+app.all("*", async (c) => {
+  // If it's an API route, return 404
+  if (c.req.path.startsWith("/api/")) {
+    return c.json({ ok: false, error: "Not found" }, 404);
+  }
+
+  // For SPA routes (non-API, non-file), redirect to /
+  return c.redirect("/");
+});
+
 export default app;
