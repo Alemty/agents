@@ -3,7 +3,8 @@
 Agente IA de búsqueda y postulación automática a vacantes Web3/Blockchain.
 
 **Stack:** Hono + Cloudflare Workers + D1 + TypeScript + IPFS/ENS  
-**CI/CD:** GitHub Actions → Cloudflare Workers + IPFS Pinata (automático)
+**CI/CD:** GitHub Actions → Cloudflare Workers + IPFS Pinata (automático)  
+**Secrets:** AGENT_JWT (Pinata) + CF_API_TOKEN (Cloudflare)
 
 ---
 
