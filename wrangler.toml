@@ -34,7 +34,10 @@ MAX_APPLICATIONS_DAY = "20"
 crons = ["0 10 * * 1", "0 14 * * 3"]  # Lunes 10am, Miércoles 2pm
 
 # Routes
-routes = [
-  { pattern = "agents.alemty.eth.limo", custom_domain = true },
-  { pattern = "trabajo.alemty.eth.limo", custom_domain = true }
-]
+[[routes]]
+pattern = "agents.alemty.eth.limo"
+custom_domain = true
+
+[[routes]]
+pattern = "trabajo.alemty.eth.limo"
+custom_domain = true

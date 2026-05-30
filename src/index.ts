@@ -729,7 +729,6 @@ app.post("/api/agent/mark-applied", async (c) => {
 // POST /api/agent/run — Ejecuta el pipeline completo del agente
 app.post("/api/agent/run", async (c) => {
   const body = await c.req.json<{
-  const body = await c.req.json<{
     action: "scrape" | "match" | "cv" | "apply" | "full";
     keywords?: string[];
     location?: string;
