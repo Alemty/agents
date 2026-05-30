@@ -18,6 +18,8 @@ export interface Job {
   cv_path: string | null;
   scraped_at: string;
   created_at: string;
+  profile_id: string | null;
+  user_keywords_json: string;
 }
 
 export interface Application {
@@ -30,4 +32,26 @@ export interface Application {
   job_title?: string;
   job_company?: string;
   platform?: string;
+  profile_id: string | null;
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  title: string;
+  email: string;
+  location: string;
+  phone: string;
+  linkedin_url: string;
+  github_url: string;
+  web_url: string;
+  headline: string;
+  summary: string;
+  skills_json: string;     // JSON array of {name, level, category}
+  experience_json: string; // JSON array of {title, company, period, description}
+  achievements_json: string; // JSON array of strings
+  keywords_json: string;   // JSON array of search keyword strings
+  theme: string;           // dark | light
+  created_at: string;
+  updated_at: string;
 }

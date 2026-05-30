@@ -267,6 +267,7 @@ app.post("/api/scrape", async (c) => {
     daysBack?: number;
     autoMatch?: boolean;
     apiKey?: string;
+    profileId?: string;
   }>();
 
   const email = c.env.LINKEDIN_EMAIL;
@@ -363,6 +364,121 @@ app.get("/api/scrape/status", async (c) => {
       maxDaily: Number(c.env.MAX_APPLICATIONS_DAY || 20),
     },
   });
+});
+
+// ---------------------------
+// Profiles CRUD (multi-user)
+// ---------------------------
+
+// POST /api/profiles — Create new profile (register user)
+app.post("/api/profiles", async (c) => {
+  const body = await c.req.json<{
+    id?: string;
+    name?: string;
+    title?: string;
+    email?: string;
+    location?: string;
+    phone?: string;
+    linkedin_url?: string;
+    github_url?: string;
+    web_url?: string;
+    headline?: string;
+    summary?: string;
+    skills?: {name: string; level: string; category: string}[];
+    experience?: {title: string; company: string; period: string; description: string}[];
+    achievements?: string[];
+    keywords?: string[];
+    theme?: string;
+  }>();
+
+  const db = c.env.DB;
+  const id = body.id || crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  await db.prepare(
+    `INSERT INTO profiles (id, name, title, email, location, phone, linkedin_url, github_url, web_url, headline, summary, skills_json, experience_json, achievements_json, keywords_json, theme, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    id,
+    body.name || "",
+    body.title || "",
+    body.email || "",
+    body.location || "",
+    body.phone || "",
+    body.linkedin_url || "",
+    body.github_url || "",
+    body.web_url || "",
+    body.headline || "",
+    body.summary || "",
+    JSON.stringify(body.skills || []),
+    JSON.stringify(body.experience || []),
+    JSON.stringify(body.achievements || []),
+    JSON.stringify(body.keywords || []),
+    body.theme || "dark",
+    now,
+    now
+  ).run();
+
+  return c.json({ ok: true, profile: { id } });
+});
+
+// GET /api/profiles/:id — Get profile
+app.get("/api/profiles/:id", async (c) => {
+  const id = c.req.param("id");
+  const profile = await c.env.DB.prepare("SELECT * FROM profiles WHERE id = ?").bind(id).first<any>();
+  if (!profile) return c.json({ ok: false, error: "Profile not found" }, 404);
+  return c.json({ ok: true, profile });
+});
+
+// PUT /api/profiles/:id — Update profile
+app.put("/api/profiles/:id", async (c) => {
+  const id = c.req.param("id");
+  const body = await c.req.json<{
+    name?: string;
+    title?: string;
+    email?: string;
+    location?: string;
+    phone?: string;
+    linkedin_url?: string;
+    github_url?: string;
+    web_url?: string;
+    headline?: string;
+    summary?: string;
+    skills?: {name: string; level: string; category: string}[];
+    experience?: {title: string; company: string; period: string; description: string}[];
+    achievements?: string[];
+    keywords?: string[];
+    theme?: string;
+  }>();
+
+  const db = c.env.DB;
+  const existing = await db.prepare("SELECT id FROM profiles WHERE id = ?").bind(id).first();
+  if (!existing) return c.json({ ok: false, error: "Profile not found" }, 404);
+
+  const updates: string[] = [];
+  const params: any[] = [];
+  const now = new Date().toISOString();
+
+  const fields = ["name", "title", "email", "location", "phone", "linkedin_url", "github_url", "web_url", "headline", "summary", "theme"] as const;
+  for (const f of fields) {
+    if ((body as any)[f] !== undefined) {
+      updates.push(`${f} = ?`);
+      params.push((body as any)[f]);
+    }
+  }
+  if (body.skills !== undefined) { updates.push("skills_json = ?"); params.push(JSON.stringify(body.skills)); }
+  if (body.experience !== undefined) { updates.push("experience_json = ?"); params.push(JSON.stringify(body.experience)); }
+  if (body.achievements !== undefined) { updates.push("achievements_json = ?"); params.push(JSON.stringify(body.achievements)); }
+  if (body.keywords !== undefined) { updates.push("keywords_json = ?"); params.push(JSON.stringify(body.keywords)); }
+
+  if (updates.length === 0) return c.json({ ok: false, error: "No fields to update" }, 400);
+
+  updates.push("updated_at = ?");
+  params.push(now);
+  params.push(id);
+
+  await db.prepare(`UPDATE profiles SET ${updates.join(", ")} WHERE id = ?`).bind(...params).run();
+  return c.json({ ok: true, updated: updates.length });
 });
 
 // GET /api/debug/browser-run — Test Browser Run Quick Actions endpoint directly
@@ -601,12 +717,12 @@ app.use("/__scheduled", async (c) => {
 
 // POST /api/agent/mark-applied — Mark a single job as applied
 app.post("/api/agent/mark-applied", async (c) => {
-  const { jobId } = await c.req.json<{ jobId: string }>();
+  const { jobId, profileId } = await c.req.json<{ jobId: string; profileId?: string }>();
   if (!jobId) return c.json({ ok: false, error: "jobId required" }, 400);
   const db = c.env.DB;
   const now = new Date().toISOString();
   await db.prepare("UPDATE jobs SET applied = 1, applied_at = ? WHERE id = ?").bind(now, jobId).run();
-  await db.prepare("INSERT INTO applications (id, job_id, status, applied_at) VALUES (?, ?, 'applied', ?)").bind(crypto.randomUUID(), jobId, now).run();
+  await db.prepare("INSERT INTO applications (id, job_id, profile_id, status, applied_at) VALUES (?, ?, ?, 'applied', ?)").bind(crypto.randomUUID(), jobId, profileId || null, now).run();
   return c.json({ ok: true, jobId });
 });
 

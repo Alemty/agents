@@ -9,6 +9,11 @@ directory = "./public"
 not_found_handling = "none"
 
 # D1 database (jobs, applications, stats)
+# Migrations
+[[migrations]]
+tag = "v1"
+new_directory = "migrations"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "jobs-db"
