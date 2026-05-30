@@ -12,7 +12,6 @@ not_found_handling = "none"
 # Migrations
 [[migrations]]
 tag = "v1"
-new_directory = "migrations"
 
 [[d1_databases]]
 binding = "DB"
