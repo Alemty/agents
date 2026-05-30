@@ -47,3 +47,9 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           command: d1 execute jobs-db --remote --file=migrations/001_initial.sql
+
+      - name: Run profiles migration
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          command: d1 execute jobs-db --remote --file=migrations/002_profiles.sql
