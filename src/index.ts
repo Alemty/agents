@@ -24,9 +24,9 @@ app.use("/*", cors({
 }));
 
 // ---------------------------
-// Health check
+// Health check — moved to /api/health so "/" serves static assets (index.html)
 // ---------------------------
-app.get("/", (c) =>
+app.get("/api/health", (c) =>
   c.json({
     ok: true,
     agent: "Job Agent v0.1",
@@ -607,13 +607,6 @@ app.get("/api/debug/scraper-test", async (c) => {
 
 // ---------------------------
 // SPA fallback — serve index.html for all non-API routes
-// ---------------------------
-
-app.get("/", async (c) => {
-  return c.html(`<!DOCTYPE html>
-<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Job Agent</title><script>location.href="/index.html"</script></head><body><p>Redirecting...</p></body></html>`);
-});
-
 // POST /api/agent/cv/:jobId — Get CV HTML for a job (POST for easier client-side use)
 app.post("/api/agent/cv/:jobId", async (c) => {
   const jobId = c.req.param("jobId");
